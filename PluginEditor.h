@@ -15,7 +15,7 @@
 
 #define DIALSIZE 100
 #define SLIDERSIZE 200
-#define TEXTBOXWIDTH 60
+#define TEXTBOXWIDTH 80
 #define TEXTBOXHEIGT 20
 
 //==============================================================================

@@ -40,7 +40,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
 
     delaySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     delaySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
-    delaySlider.setTextValueSuffix("microsecs");
+    delaySlider.setTextValueSuffix(" microsec");
     delaySlider.setRange(200.0f, 300.0f);
     delaySlider.setValue(250.0f);
     delaySlider.addListener(this);
@@ -48,7 +48,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     frequencySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     frequencySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
-    frequencySlider.setTextValueSuffix("Hz");
+    frequencySlider.setTextValueSuffix(" Hz");
     frequencySlider.setRange(400.0f, 1000.0f);
     frequencySlider.setValue(700.0f);
     frequencySlider.addListener(this);
@@ -56,7 +56,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     qSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     qSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
-    qSlider.setTextValueSuffix("Q");
+    qSlider.setTextValueSuffix(" Q");
     qSlider.setRange(0.1f, 0.6f);
     qSlider.setValue(0.2f);
     qSlider.setSkewFactorFromMidPoint(0.2f);
@@ -65,7 +65,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     separationSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     separationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
-    separationSlider.setTextValueSuffix("dB");
+    separationSlider.setTextValueSuffix(" dB");
     separationSlider.setRange(-10.0f, 0.0f);
     separationSlider.setValue(-3.0f);
     separationSlider.setSkewFactorFromMidPoint(-3.0f);
@@ -74,9 +74,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     gainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     gainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
-    gainSlider.setTextValueSuffix("dB");
+    gainSlider.setTextValueSuffix(" dB");
     gainSlider.setRange(-48.0, 0.0);
-    gainSlider.setValue(-1.0);
+    gainSlider.setValue(0.0);
     gainSlider.addListener(this);
     addAndMakeVisible(&gainSlider);
     

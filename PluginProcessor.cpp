@@ -41,11 +41,13 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     // method to stuff parameters into the treeState
     std::vector<std::unique_ptr<RangedAudioParameter>> params;
     
-    auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (200.0f, 300.0f), 250.0f);
-    auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (400.0f, 1000.0f), 700.0f);
-    auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 0.6f), 0.2f);
-    auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-10.0f, 0.0f), -3.0f);
-    auto gainParams = std::make_unique<AudioParameterFloat> (GAIN_ID, GAIN_NAME, NormalisableRange<float> (-48.0f, 0.0f), -1.0f);
+    auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (200.0f, 300.0f), 250.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
+    auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (400.0f, 1000.0f), 700.0f, FREQ_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
+    auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 0.6f), 0.2f, Q_NAME,
+        AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
+    auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-10.0f, 0.0f), -3.0f, SEP_NAME,
+        AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
+    auto gainParams = std::make_unique<AudioParameterFloat> (GAIN_ID, GAIN_NAME, NormalisableRange<float> (-48.0f, 0.0f), 0.0f, GAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto activeParams = std::make_unique<AudioParameterBool> (ACTIVE_ID, ACTIVE_NAME, true);
     
     params.push_back(std::move(delayParams));
