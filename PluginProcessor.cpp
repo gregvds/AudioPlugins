@@ -196,9 +196,6 @@ void GainSliderAudioProcessor::updateFilterParameters ()
 {
     auto sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
     auto sliderQValue = treeState.getRawParameterValue(Q_ID);
-    //float sliderSepValue = *treeState.getRawParameterValue(SEP_ID);
-    //*lowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeHighShelf(mSampleRate, *sliderFreqValue, *sliderQValue, Decibels::decibelsToGain(2*sliderSepValue));
-    //*highPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderQValue, Decibels::decibelsToGain(sliderSepValue));
     *lowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue, *sliderQValue);
     *highPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue, *sliderQValue);
 }
@@ -225,11 +222,14 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     if (*activeState == true)
     {
         updateFilterParameters();
+        const int bufferLength = buffer.getNumSamples();
+        const int delayBufferLength = mDelayBuffer.getNumSamples();
+
         // We copy the buffer into the filter buffer
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            const float* bufferData = buffer.getReadPointer(channel);
-            mFilterBuffer.copyFrom(channel, 0, bufferData, buffer.getNumSamples());
+            const float* bufferChannelData = buffer.getReadPointer(channel);
+            mFilterBuffer.copyFrom(channel, 0, bufferChannelData, bufferLength);
         }
         
         // Do the filtering on the filter buffer for the Crossfeed signal
@@ -239,40 +239,35 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         // Adjust gain on the Filter buffer for separation
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            auto* channelData = mFilterBuffer.getWritePointer (channel);
+            auto* filteredChannelData = mFilterBuffer.getWritePointer (channel);
             auto sepGainValue = treeState.getRawParameterValue(SEP_ID);
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+            for (int sample = 0; sample < mFilterBuffer.getNumSamples(); ++sample)
             {
-                channelData[sample] = buffer.getSample(channel, sample) * Decibels::decibelsToGain(*sepGainValue/2.0);
+                filteredChannelData[sample] = mFilterBuffer.getSample(channel, sample) * Decibels::decibelsToGain(*sepGainValue/2.0);
             }
         }
 
         // We copy the filter buffer into the delay Buffer
-        const int bufferLength = buffer.getNumSamples();
-        const int delayBufferLength = mDelayBuffer.getNumSamples();
-        
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            // Here we cross the channels!
-            const float* bufferData = mFilterBuffer.getReadPointer(getTotalNumInputChannels()-1-channel);
-            fillDelayBuffer(channel, bufferLength, delayBufferLength, bufferData);
+            // Here we cross the channels with getTotalNumInputChannels()-1-channel 0 -> 1, 1 -> 0!
+            const float* filterChannelData = mFilterBuffer.getReadPointer(getTotalNumInputChannels()-1-channel);
+            fillDelayBuffer(channel, bufferLength, delayBufferLength, filterChannelData);
         }
 
         // Do the filtering on the main buffer for the direct signal
         dsp::AudioBlock<float> block2 (buffer);
-        // updateFilterParameters();
         highPassFilterDuplicator.process(dsp::ProcessContextReplacing<float> (block2));
         
-        // Gain adjustment to the main signal (To be removed in the end?)
+        // Gain adjustment to the main signal (To be removed in the end? Useful to debug)
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            auto* channelData = buffer.getWritePointer (channel);
+            auto* DirectChannelData = buffer.getWritePointer (channel);
             auto sliderGainValue = treeState.getRawParameterValue(GAIN_ID);
             auto sepGainValue = treeState.getRawParameterValue(SEP_ID);
-         
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
             {
-                channelData[sample] = buffer.getSample(channel, sample) * Decibels::decibelsToGain(*sliderGainValue) * Decibels::decibelsToGain(*sepGainValue/-2.0);
+                DirectChannelData[sample] = buffer.getSample(channel, sample) * Decibels::decibelsToGain(*sliderGainValue) * Decibels::decibelsToGain(*sepGainValue/-2.0);
          
             }
         }
@@ -280,9 +275,9 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         // We add the delayBuffer to the main buffer
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            const float* delayBufferData = mDelayBuffer.getReadPointer(channel);
+            const float* delayChannelData = mDelayBuffer.getReadPointer(channel);
             auto sliderDelayValue = treeState.getRawParameterValue(DELAY_ID);
-            getFromDelayBuffer(*sliderDelayValue, buffer, channel, bufferLength, delayBufferLength, delayBufferData);
+            getFromDelayBuffer(*sliderDelayValue, buffer, channel, bufferLength, delayBufferLength, delayChannelData);
         }
 
         //Update write position

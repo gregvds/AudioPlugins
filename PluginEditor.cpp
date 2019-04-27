@@ -51,7 +51,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencySlider.setTextValueSuffix("Hz");
     frequencySlider.setRange(400.0f, 1000.0f);
     frequencySlider.setValue(700.0f);
-    //frequencySlider.setSkewFactorFromMidPoint(<#double sliderValueToShowAtMidPoint#>)
     frequencySlider.addListener(this);
     addAndMakeVisible(&frequencySlider);
     
@@ -121,11 +120,11 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
     {
         if (comboBox->getSelectedIdAsValue() == 1)
         {
-            delaySlider.setValue(300.0f);
+            delaySlider.setValue(280.0f);
             frequencySlider.setValue(900.0f);
-            qSlider.setValue(0.4f);
+            qSlider.setValue(0.3f);
             separationSlider.setValue(-6.0f);
-            gainSlider.setValue(0.0f);
+            //gainSlider.setValue(0.0f);
         }
         else if (comboBox->getSelectedIdAsValue() == 2)
         {
@@ -133,15 +132,15 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
             frequencySlider.setValue(800.0f);
             qSlider.setValue(0.4f);
             separationSlider.setValue(-4.0f);
-            gainSlider.setValue(0.0f);
+            //gainSlider.setValue(0.0f);
         }
         else if (comboBox->getSelectedIdAsValue() == 3)
         {
-            delaySlider.setValue(200.0f);
+            delaySlider.setValue(230.0f);
             frequencySlider.setValue(700.0f);
-            qSlider.setValue(0.3f);
+            qSlider.setValue(0.55f);
             separationSlider.setValue(-3.0f);
-            gainSlider.setValue(0.0f);
+            //gainSlider.setValue(0.0f);
         }
     }
 }
