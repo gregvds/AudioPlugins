@@ -17,6 +17,7 @@
 #define SLIDERSIZE 200
 #define TEXTBOXWIDTH 80
 #define TEXTBOXHEIGT 20
+#define LABELHEIGHT 20
 
 //==============================================================================
 /**
@@ -66,6 +67,10 @@ private:
     // access the processor object that created it.
     GainSliderAudioProcessor& processor;
     
+    // These must be declared before the components using them
+    RotaryLookAndFeel rotaryLookAndFeel;
+    VerticalLookAndFeel verticalLookAndFeel;
+
     ComboBox crossFeedMenu;
     
     Slider delaySlider;
@@ -74,11 +79,13 @@ private:
     Slider separationSlider;
     Slider gainSlider;
     
+    Label delayLabel;
+    Label frequencyLabel;
+    Label qLabel;
+    Label separationLabel;
+    Label gainLabel;
+    
     ToggleButton ActiveStateToggleButton { "Active" };
-    
-    RotaryLookAndFeel rotaryLookAndFeel;
-    
-    VerticalLookAndFeel verticalLookAndFeel;
     
 public:
     // Things public to be destroyed before private stuff.

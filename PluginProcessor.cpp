@@ -28,6 +28,7 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
 
 #endif
 {
+    //treeState.state = ValueTree("savedParameters");
 }
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
@@ -41,13 +42,13 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     // method to stuff parameters into the treeState
     std::vector<std::unique_ptr<RangedAudioParameter>> params;
     
-    auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (200.0f, 300.0f), 250.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
+    auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (200.0f, 320.0f), 270.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
     auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (400.0f, 1000.0f), 700.0f, FREQ_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
-    auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 0.6f), 0.2f, Q_NAME,
+    auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 0.6f), 0.4f, Q_NAME,
         AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
-    auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-10.0f, 0.0f), -3.0f, SEP_NAME,
+    auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-6.0f, 0.0f), -4.0f, SEP_NAME,
         AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
-    auto gainParams = std::make_unique<AudioParameterFloat> (GAIN_ID, GAIN_NAME, NormalisableRange<float> (-48.0f, 0.0f), 0.0f, GAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
+    auto gainParams = std::make_unique<AudioParameterFloat> (GAIN_ID, GAIN_NAME, NormalisableRange<float> (-10.0f, 0.0f), 0.0f, GAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto activeParams = std::make_unique<AudioParameterBool> (ACTIVE_ID, ACTIVE_NAME, true);
     
     params.push_back(std::move(delayParams));
@@ -56,6 +57,8 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     params.push_back(std::move(sepParams));
     params.push_back(std::move(gainParams));
     params.push_back(std::move(activeParams));
+    
+    
     
     return {params.begin(), params.end()};
 }
@@ -162,6 +165,7 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     DBG("delayBufferSize" << delayBufferSize); //44228
     DBG("samplesPerBlock" << samplesPerBlock); //128
     DBG("sampleRate" << sampleRate); //44100
+    DBG("Decibels from gain: " << Decibels::gainToDecibels(0.78f));
 }
 
 void GainSliderAudioProcessor::releaseResources()
@@ -198,8 +202,12 @@ void GainSliderAudioProcessor::updateFilterParameters ()
 {
     auto sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
     auto sliderQValue = treeState.getRawParameterValue(Q_ID);
-    *lowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue, *sliderQValue);
-    *highPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue, *sliderQValue);
+    auto sliderSepVapule = treeState.getRawParameterValue(SEP_ID);
+    
+    *highPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderQValue, pow(Decibels::decibelsToGain(*sliderSepVapule), 2));
+    *lowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeHighShelf(mSampleRate, *sliderFreqValue, *sliderQValue, 0.1f);
+    //*lowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue, *sliderQValue);
+    //*highPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue, *sliderQValue);
 }
 
 void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
@@ -239,13 +247,14 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         lowPassFilterDuplicator.process(dsp::ProcessContextReplacing<float> (block));
         
         // Adjust gain on the Filter buffer for separation
+        
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
             auto* filteredChannelData = mFilterBuffer.getWritePointer (channel);
             auto sepGainValue = treeState.getRawParameterValue(SEP_ID);
             for (int sample = 0; sample < mFilterBuffer.getNumSamples(); ++sample)
             {
-                filteredChannelData[sample] = mFilterBuffer.getSample(channel, sample) * Decibels::decibelsToGain(*sepGainValue/2.0);
+                filteredChannelData[sample] = mFilterBuffer.getSample(channel, sample) * Decibels::decibelsToGain(*sepGainValue);
             }
         }
 
@@ -266,10 +275,10 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         {
             auto* DirectChannelData = buffer.getWritePointer (channel);
             auto sliderGainValue = treeState.getRawParameterValue(GAIN_ID);
-            auto sepGainValue = treeState.getRawParameterValue(SEP_ID);
+            //auto sepGainValue = treeState.getRawParameterValue(SEP_ID);
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
             {
-                DirectChannelData[sample] = buffer.getSample(channel, sample) * Decibels::decibelsToGain(*sliderGainValue) * Decibels::decibelsToGain(*sepGainValue/-2.0);
+                DirectChannelData[sample] = buffer.getSample(channel, sample) * Decibels::decibelsToGain(*sliderGainValue);
          
             }
         }
@@ -344,12 +353,26 @@ void GainSliderAudioProcessor::getStateInformation (MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    /*
+    ScopedPointer<XmlElement> xml (treeState.state.createXml());
+    copyXmlToBinary(*xml, destData);
+     */
 }
 
 void GainSliderAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    /*
+    ScopedPointer<XmlElement> loadedParameters (getXmlFromBinary(data, sizeInBytes));
+    if (loadedParameters != nullptr)
+    {
+        if (loadedParameters -> hasTagName(treeState.state.getType()))
+        {
+            treeState.state = ValueTree::fromXml(*loadedParameters);
+        }
+    }
+     */
 }
 
 //==============================================================================
