@@ -20,7 +20,33 @@
 
 //==============================================================================
 /**
+ Classes to contain look and feel customizations for different types of sliders
 */
+
+class RotaryLookAndFeel : public LookAndFeel_V4
+{
+public:
+    RotaryLookAndFeel()
+    {
+        setColour(Slider::ColourIds::thumbColourId, Colours::olivedrab);
+    }
+    
+};
+
+class VerticalLookAndFeel : public LookAndFeel_V4
+{
+public:
+    VerticalLookAndFeel()
+    {
+        setColour(Slider::ColourIds::thumbColourId, Colours::khaki);
+    }
+    
+};
+
+//==============================================================================
+/**
+ */
+
 class GainSliderAudioProcessorEditor  : public AudioProcessorEditor,
                                         public Slider::Listener,
                                         public ComboBox::Listener
@@ -49,6 +75,10 @@ private:
     Slider gainSlider;
     
     ToggleButton ActiveStateToggleButton { "Active" };
+    
+    RotaryLookAndFeel rotaryLookAndFeel;
+    
+    VerticalLookAndFeel verticalLookAndFeel;
     
 public:
     // Things public to be destroyed before private stuff.

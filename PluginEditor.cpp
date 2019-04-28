@@ -17,19 +17,8 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    
     // Size is dynamic regarding the number of objects
     setSize (3* DIALSIZE , 3*(DIALSIZE + TEXTBOXHEIGT) + TEXTBOXHEIGT);
-    //setSize(800, 600);
-    
-    crossFeedMenu.addItem("Full", 1);
-    crossFeedMenu.addItem("Medium", 2);
-    crossFeedMenu.addItem("Light", 3);
-    crossFeedMenu.setSelectedId(2);
-    
-    crossFeedMenu.setJustificationType(Justification::centred);
-    crossFeedMenu.addListener(this);
-    addAndMakeVisible(&crossFeedMenu);
     
     delaySliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DELAY_ID, delaySlider);
     freqSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, FREQ_ID, frequencySlider);
@@ -38,6 +27,14 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     gainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, GAIN_ID, gainSlider);
     ActiveStateToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, ACTIVE_ID, ActiveStateToggleButton);
 
+    crossFeedMenu.addItem("Full", 1);
+    crossFeedMenu.addItem("Medium", 2);
+    crossFeedMenu.addItem("Light", 3);
+    crossFeedMenu.setSelectedId(2);
+    crossFeedMenu.setJustificationType(Justification::centred);
+    crossFeedMenu.addListener(this);
+    addAndMakeVisible(&crossFeedMenu);
+    
     delaySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     delaySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     delaySlider.setTextValueSuffix(" microsec");
@@ -82,6 +79,12 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     ActiveStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
     addAndMakeVisible(&ActiveStateToggleButton);
+    
+    delaySlider.setLookAndFeel(&rotaryLookAndFeel);
+    frequencySlider.setLookAndFeel(&rotaryLookAndFeel);
+    qSlider.setLookAndFeel(&rotaryLookAndFeel);
+    separationSlider.setLookAndFeel(&verticalLookAndFeel);
+    gainSlider.setLookAndFeel(&verticalLookAndFeel);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
