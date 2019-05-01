@@ -19,10 +19,14 @@
 #define Q_NAME "Q"
 #define SEP_ID "sep"
 #define SEP_NAME "Sep"
-#define GAIN_ID "gain"
-#define GAIN_NAME "Gain"
+#define DGAIN_ID "dgain"
+#define DGAIN_NAME "Dgain"
+#define XGAIN_ID "xgain"
+#define XGAIN_NAME "Xgain"
 #define ACTIVE_ID "active"
 #define ACTIVE_NAME "Active"
+#define TYPE_ID "type"
+#define TYPE_NAME "Type"
 
 
 //==============================================================================
@@ -90,9 +94,9 @@ private:
     int mWritePosition { 0 };
     double mSampleRate {44100};
     
-    // Processor duplicators for the filters
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> lowPassFilterDuplicator;
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> highPassFilterDuplicator;
+    // Processor duplicators for the filters    
+    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirLowPassFilterDuplicator;
+    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirHighPassFilterDuplicator;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainSliderAudioProcessor)

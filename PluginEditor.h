@@ -18,6 +18,7 @@
 #define TEXTBOXWIDTH 80
 #define TEXTBOXHEIGT 20
 #define LABELHEIGHT 20
+#define SPECTRUMWIDTH 500
 
 //==============================================================================
 /**
@@ -72,20 +73,25 @@ private:
     VerticalLookAndFeel verticalLookAndFeel;
 
     ComboBox crossFeedMenu;
+    ComboBox filterTypeMenu;
     
     Slider delaySlider;
     Slider frequencySlider;
     Slider qSlider;
     Slider separationSlider;
-    Slider gainSlider;
+    Slider directGainSlider;
+    Slider xfeedGainSlider;
     
     Label delayLabel;
     Label frequencyLabel;
     Label qLabel;
     Label separationLabel;
-    Label gainLabel;
+    Label directGainLabel;
+    Label xfeedGainLabel;
     
     ToggleButton ActiveStateToggleButton { "Active" };
+    
+    SharedResourcePointer<TooltipWindow> tooltipWindow;
     
 public:
     // Things public to be destroyed before private stuff.
@@ -94,8 +100,10 @@ public:
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> freqSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> qSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> sepSliderAttach;
-    std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> gainSliderAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> directGainSliderAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> xfeedGainSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::ButtonAttachment> ActiveStateToggleButtonAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::ComboBoxAttachment > filterTypeMenuAttach;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainSliderAudioProcessorEditor)
 };
