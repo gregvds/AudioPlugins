@@ -22,6 +22,18 @@
 
 //==============================================================================
 /**
+ Class to visualize audio signal
+ */
+class Visualiser  : public AudioVisualiserComponent
+{
+public:
+    Visualiser() : AudioVisualiserComponent(2)
+    {
+    }
+};
+
+//==============================================================================
+/**
  Classes to contain look and feel customizations for different types of sliders
 */
 
@@ -62,6 +74,8 @@ public:
     void resized() override;
     void sliderValueChanged(Slider *slider) override;
     void comboBoxChanged(ComboBox *comboBox) override;
+
+    Visualiser visualiser;
     
 private:
     // This reference is provided as a quick way for your editor to
@@ -92,6 +106,7 @@ private:
     ToggleButton ActiveStateToggleButton { "Active" };
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
+    
     
 public:
     // Things public to be destroyed before private stuff.

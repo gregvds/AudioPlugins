@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+//#include "PluginEditor.h"
 #define DELAY_ID "delay"
 #define DELAY_NAME "Delay"
 #define FREQ_ID "freq"
@@ -27,6 +28,7 @@
 #define ACTIVE_NAME "Active"
 #define TYPE_ID "type"
 #define TYPE_NAME "Type"
+
 
 
 //==============================================================================
@@ -80,9 +82,11 @@ public:
     //==============================================================================
     AudioProcessorValueTreeState treeState;
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    
+    GainSliderAudioProcessorEditor* audioProcessorEditor = GainSliderAudioProcessorEditor::createEditor();
     
 private:
+    
+
     // Audio buffer for filtering the crossfeed signal only
     AudioBuffer<float> mFilterBuffer;
     int mFilterBufferSize { 0 };
@@ -94,7 +98,7 @@ private:
     int mWritePosition { 0 };
     double mSampleRate {44100};
     
-    // Processor duplicators for the filters    
+    // Processor duplicators for the filters
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirLowPassFilterDuplicator;
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirHighPassFilterDuplicator;
     

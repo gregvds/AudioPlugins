@@ -27,6 +27,7 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
 #endif
 {
     //treeState.state = ValueTree("savedParameters");
+    //auto* audioProcessorEditor = createEditor();
 }
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
@@ -164,6 +165,8 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     iirLowPassFilterDuplicator.prepare(spec);
     iirHighPassFilterDuplicator.prepare(spec);
     
+    audioProcessorEditor->visualiser.clear();
+    
     // Debug
     /*
     DBG("delayBufferSize: " << delayBufferSize); //44228
@@ -243,6 +246,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         //mDelayBuffer.clear(i, 0, mDelayBuffer.getNumSamples());
     }
     
+    
     auto* activeState = treeState.getRawParameterValue(ACTIVE_ID);
     if (*activeState == true)
     {
@@ -309,6 +313,9 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mWritePosition += buffer.getNumSamples();
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
+
+    audioProcessorEditor->visualiser.pushBuffer(buffer);
+
 }
 
 //==============================================================================
