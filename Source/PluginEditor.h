@@ -13,6 +13,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "Visualiser.h"
+#include "SpectrumAnalyser.h"
 
 #define DIALSIZE 100
 #define SLIDERSIZE 200

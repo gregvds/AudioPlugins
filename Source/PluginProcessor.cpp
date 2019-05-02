@@ -26,8 +26,6 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
 
 #endif
 {
-    //treeState.state = ValueTree("savedParameters");
-    //auto* audioProcessorEditor = createEditor();
 }
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
@@ -165,7 +163,7 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     iirLowPassFilterDuplicator.prepare(spec);
     iirHighPassFilterDuplicator.prepare(spec);
     
-    //visualiser.clear();
+    visualiser.clear();
     
     // Debug
     /*
@@ -316,6 +314,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
 
     
     visualiser.pushBuffer(buffer);
+    spectrumAnalyser.getNextAudioBlock(buffer);
 
 }
 

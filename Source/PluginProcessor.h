@@ -12,6 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Visualiser.h"
+#include "SpectrumAnalyser.h"
 
 #define DELAY_ID "delay"
 #define DELAY_NAME "Delay"
@@ -86,6 +87,7 @@ public:
     //GainSliderAudioProcessorEditor* audioProcessorEditor = GainSliderAudioProcessorEditor::createEditor();
     
     Visualiser visualiser;
+    SpectrumAnalyser spectrumAnalyser;
     
 private:
     

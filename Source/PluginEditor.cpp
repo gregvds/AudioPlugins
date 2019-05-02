@@ -143,7 +143,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setLookAndFeel(&verticalLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
     
-    addAndMakeVisible(processor.visualiser);
+    processor.spectrumAnalyser.setLookAndFeel(&LookAndFeel::getDefaultLookAndFeel());
+    
+    addAndMakeVisible(processor.spectrumAnalyser);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -155,6 +157,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+    //processor.spectrumAnalyser.drawFrame (g);
 }
 
 void GainSliderAudioProcessorEditor::resized()
@@ -187,7 +190,7 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
     xfeedGainSlider.setBounds(slider3);
     
-    processor.visualiser.setBounds(spectrum);
+    processor.spectrumAnalyser.setBounds(spectrum);
 }
 
 //==============================================================================
