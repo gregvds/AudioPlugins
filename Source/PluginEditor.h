@@ -12,6 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+#include "Visualiser.h"
 
 #define DIALSIZE 100
 #define SLIDERSIZE 200
@@ -19,18 +20,6 @@
 #define TEXTBOXHEIGT 20
 #define LABELHEIGHT 20
 #define SPECTRUMWIDTH 500
-
-//==============================================================================
-/**
- Class to visualize audio signal
- */
-class Visualiser  : public AudioVisualiserComponent
-{
-public:
-    Visualiser() : AudioVisualiserComponent(2)
-    {
-    }
-};
 
 //==============================================================================
 /**
@@ -75,7 +64,7 @@ public:
     void sliderValueChanged(Slider *slider) override;
     void comboBoxChanged(ComboBox *comboBox) override;
 
-    Visualiser visualiser;
+    
     
 private:
     // This reference is provided as a quick way for your editor to
@@ -106,6 +95,8 @@ private:
     ToggleButton ActiveStateToggleButton { "Active" };
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
+    
+    //Visualiser visualiser;
     
     
 public:
