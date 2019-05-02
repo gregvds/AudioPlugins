@@ -11,7 +11,8 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-//#include "PluginEditor.h"
+#include "Visualiser.h"
+
 #define DELAY_ID "delay"
 #define DELAY_NAME "Delay"
 #define FREQ_ID "freq"
@@ -82,7 +83,9 @@ public:
     //==============================================================================
     AudioProcessorValueTreeState treeState;
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    GainSliderAudioProcessorEditor* audioProcessorEditor = GainSliderAudioProcessorEditor::createEditor();
+    //GainSliderAudioProcessorEditor* audioProcessorEditor = GainSliderAudioProcessorEditor::createEditor();
+    
+    Visualiser visualiser;
     
 private:
     

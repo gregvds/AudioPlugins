@@ -165,7 +165,7 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     iirLowPassFilterDuplicator.prepare(spec);
     iirHighPassFilterDuplicator.prepare(spec);
     
-    audioProcessorEditor->visualiser.clear();
+    //visualiser.clear();
     
     // Debug
     /*
@@ -259,7 +259,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
             const float* bufferChannelData = buffer.getReadPointer(channel);
             mFilterBuffer.copyFrom(channel, 0, bufferChannelData, bufferLength);
         }
-        
+
         // Do the filtering on the filter buffer for the Crossfeed signal
         updateFilterParameters();
         dsp::AudioBlock<float> block (mFilterBuffer);
@@ -300,7 +300,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
                 DirectChannelData[sample] = buffer.getSample(channel, sample) * Decibels::decibelsToGain(*dGainValue);
             }
         }
-        
+
         // We add the delayBuffer to the main buffer
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
@@ -314,7 +314,8 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
 
-    audioProcessorEditor->visualiser.pushBuffer(buffer);
+    
+    visualiser.pushBuffer(buffer);
 
 }
 

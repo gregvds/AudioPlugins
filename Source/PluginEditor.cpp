@@ -136,11 +136,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     ActiveStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
     addAndMakeVisible(&ActiveStateToggleButton);
     
-    visualiser.setBufferSize(64);
-    visualiser.setSamplesPerBlock(64);
-    visualiser.setColours(Colours::black , Colours::beige );
-    addAndMakeVisible(&visualiser);
-    
     delaySlider.setLookAndFeel(&rotaryLookAndFeel);
     frequencySlider.setLookAndFeel(&rotaryLookAndFeel);
     qSlider.setLookAndFeel(&rotaryLookAndFeel);
@@ -148,7 +143,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setLookAndFeel(&verticalLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
     
-    
+    addAndMakeVisible(processor.visualiser);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -192,8 +187,7 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
     xfeedGainSlider.setBounds(slider3);
     
-    visualiser.setBounds(spectrum);
-    
+    processor.visualiser.setBounds(spectrum);
 }
 
 //==============================================================================
