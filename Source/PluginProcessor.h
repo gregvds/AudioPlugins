@@ -80,15 +80,17 @@ public:
     void getFromDelayBuffer(float delayTimeValue, AudioBuffer<float>& buffer, int channel, const int bufferLength, const int delayBufferLength, const float* delayBufferData);
     void updateFilterParameters ();
     
+    void setThumbnail( AudioThumbnail* ptr) { thumbnail = ptr; };
+    
     //==============================================================================
     AudioProcessorValueTreeState treeState;
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     //GainSliderAudioProcessorEditor* audioProcessorEditor = GainSliderAudioProcessorEditor::createEditor();
     
-    Visualiser visualiser;
+    //Visualiser visualiser;
     
 private:
-    
+    AudioThumbnail* thumbnail = nullptr;
 
     // Audio buffer for filtering the crossfeed signal only
     AudioBuffer<float> mFilterBuffer;

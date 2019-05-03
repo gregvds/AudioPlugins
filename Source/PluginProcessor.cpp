@@ -26,8 +26,6 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
 
 #endif
 {
-    //treeState.state = ValueTree("savedParameters");
-    //auto* audioProcessorEditor = createEditor();
 }
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
@@ -165,7 +163,7 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     iirLowPassFilterDuplicator.prepare(spec);
     iirHighPassFilterDuplicator.prepare(spec);
     
-    //visualiser.clear();
+    thumbnail->reset(numInputChannels, mSampleRate);
     
     // Debug
     /*
@@ -313,9 +311,10 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mWritePosition += buffer.getNumSamples();
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
-
-    
-    visualiser.pushBuffer(buffer);
+    if (thumbnail != nullptr)
+    {
+        thumbnail->addBlock(static_cast<int64>(0), buffer, 0, buffer.getNumSamples());
+    }
 
 }
 

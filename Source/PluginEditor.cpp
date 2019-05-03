@@ -17,6 +17,9 @@
 GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
+    initThumbnail(); //set up all the thumbnail thread stuff in this function
+    processor.setThumbnail( &thumbnail ) ;
+    
     tooltipWindow->setMillisecondsBeforeTipAppears (500);
     
     // Make sure that before the constructor has finished, you've set the
@@ -143,11 +146,17 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setLookAndFeel(&verticalLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
     
-    addAndMakeVisible(processor.visualiser);
+    addAndMakeVisible(visualiser);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 {
+    processor.setThumbnail( nullptr ) ;
+}
+
+void GainSliderAudioProcessorEditor::initThumbnail()
+{
+    thumbnail.reset(processor.getTotalNumInputChannels(), processor.getSampleRate());
 }
 
 //==============================================================================
@@ -155,6 +164,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+    //visualiser.pushBuffer(thumbnail);
 }
 
 void GainSliderAudioProcessorEditor::resized()
@@ -187,7 +197,8 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
     xfeedGainSlider.setBounds(slider3);
     
-    processor.visualiser.setBounds(spectrum);
+    visualiser.setBounds(spectrum);
+    
 }
 
 //==============================================================================

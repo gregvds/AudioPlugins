@@ -63,7 +63,7 @@ public:
     void resized() override;
     void sliderValueChanged(Slider *slider) override;
     void comboBoxChanged(ComboBox *comboBox) override;
-
+    void initThumbnail();
     
     
 private:
@@ -96,7 +96,11 @@ private:
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
-    //Visualiser visualiser;
+    AudioFormatManager formatManager;
+    AudioThumbnailCache thumbnailCache  { 10 };
+    AudioThumbnail thumbnail { 512, formatManager, thumbnailCache };
+    
+    Visualiser visualiser;
     
     
 public:
