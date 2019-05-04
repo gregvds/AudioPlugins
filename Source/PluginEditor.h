@@ -12,7 +12,6 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
-#include "Visualiser.h"
 #include "SpectrumAnalyser.h"
 
 #define DIALSIZE 100
@@ -64,7 +63,6 @@ public:
     void resized() override;
     void sliderValueChanged(Slider *slider) override;
     void comboBoxChanged(ComboBox *comboBox) override;
-
     
     
 private:
@@ -75,7 +73,7 @@ private:
     // These must be declared before the components using them
     RotaryLookAndFeel rotaryLookAndFeel;
     VerticalLookAndFeel verticalLookAndFeel;
-
+    
     ComboBox crossFeedMenu;
     ComboBox filterTypeMenu;
     
@@ -96,9 +94,6 @@ private:
     ToggleButton ActiveStateToggleButton { "Active" };
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
-    
-    //Visualiser visualiser;
-    
     
 public:
     // Things public to be destroyed before private stuff.

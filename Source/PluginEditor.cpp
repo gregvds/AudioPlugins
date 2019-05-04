@@ -11,8 +11,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-
-
 //==============================================================================
 GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
@@ -143,8 +141,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setLookAndFeel(&verticalLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
     
-    processor.spectrumAnalyser.setLookAndFeel(&LookAndFeel::getDefaultLookAndFeel());
-    
     addAndMakeVisible(processor.spectrumAnalyser);
 }
 
@@ -157,7 +153,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
-    //processor.spectrumAnalyser.drawFrame (g);
+    processor.spectrumAnalyser.drawFrame(g);
 }
 
 void GainSliderAudioProcessorEditor::resized()
@@ -168,7 +164,7 @@ void GainSliderAudioProcessorEditor::resized()
     Rectangle<int> slider1 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider2 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider3 = bounds.removeFromLeft(DIALSIZE);
-    Rectangle<int> spectrum = bounds.removeFromLeft(SPECTRUMWIDTH);
+    Rectangle<int> spectrum = bounds.removeFromRight(SPECTRUMWIDTH);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
@@ -191,6 +187,7 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainSlider.setBounds(slider3);
     
     processor.spectrumAnalyser.setBounds(spectrum);
+
 }
 
 //==============================================================================
