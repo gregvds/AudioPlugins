@@ -11,15 +11,10 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-
-
 //==============================================================================
 GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
-    initThumbnail(); //set up all the thumbnail thread stuff in this function
-    processor.setThumbnail( &thumbnail ) ;
-    
     tooltipWindow->setMillisecondsBeforeTipAppears (500);
     
     // Make sure that before the constructor has finished, you've set the
@@ -146,17 +141,11 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setLookAndFeel(&verticalLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
     
-    addAndMakeVisible(visualiser);
+    addAndMakeVisible(processor.spectrumAnalyser);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 {
-    processor.setThumbnail( nullptr ) ;
-}
-
-void GainSliderAudioProcessorEditor::initThumbnail()
-{
-    thumbnail.reset(processor.getTotalNumInputChannels(), processor.getSampleRate());
 }
 
 //==============================================================================
@@ -164,8 +153,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
-    //visualiser.pushBuffer(thumbnail);
-    DBG("Thumbnail: " << thumbnail.getNumSamplesFinished() );
+    processor.spectrumAnalyser.drawFrame(g);
 }
 
 void GainSliderAudioProcessorEditor::resized()
@@ -176,7 +164,7 @@ void GainSliderAudioProcessorEditor::resized()
     Rectangle<int> slider1 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider2 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider3 = bounds.removeFromLeft(DIALSIZE);
-    Rectangle<int> spectrum = bounds.removeFromLeft(SPECTRUMWIDTH);
+    Rectangle<int> spectrum = bounds.removeFromRight(SPECTRUMWIDTH);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
@@ -198,7 +186,7 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
     xfeedGainSlider.setBounds(slider3);
     
-    visualiser.setBounds(spectrum);
+    processor.spectrumAnalyser.setBounds(spectrum);
     
 }
 

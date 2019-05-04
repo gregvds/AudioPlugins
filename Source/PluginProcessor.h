@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "Visualiser.h"
+#include "SpectrumAnalyser.h"
 
 #define DELAY_ID "delay"
 #define DELAY_NAME "Delay"
@@ -80,18 +80,13 @@ public:
     void getFromDelayBuffer(float delayTimeValue, AudioBuffer<float>& buffer, int channel, const int bufferLength, const int delayBufferLength, const float* delayBufferData);
     void updateFilterParameters ();
     
-    void setThumbnail( AudioThumbnail* ptr) { thumbnail = ptr; };
-    
     //==============================================================================
     AudioProcessorValueTreeState treeState;
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
-    //GainSliderAudioProcessorEditor* audioProcessorEditor = GainSliderAudioProcessorEditor::createEditor();
     
-    //Visualiser visualiser;
+    SpectrumAnalyser spectrumAnalyser;
     
 private:
-    AudioThumbnail* thumbnail = nullptr;
-
     // Audio buffer for filtering the crossfeed signal only
     AudioBuffer<float> mFilterBuffer;
     int mFilterBufferSize { 0 };

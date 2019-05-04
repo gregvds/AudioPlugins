@@ -163,8 +163,6 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     iirLowPassFilterDuplicator.prepare(spec);
     iirHighPassFilterDuplicator.prepare(spec);
     
-    thumbnail->reset(numInputChannels, mSampleRate);
-    
     // Debug
     /*
     DBG("delayBufferSize: " << delayBufferSize); //44228
@@ -241,7 +239,6 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     {
         buffer.clear (i, 0, buffer.getNumSamples());
-        //mDelayBuffer.clear(i, 0, mDelayBuffer.getNumSamples());
     }
     
     
@@ -311,11 +308,8 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mWritePosition += buffer.getNumSamples();
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
-    if (thumbnail != nullptr)
-    {
-        // DBG("thumbnail != nullptr");
-        thumbnail->addBlock(static_cast<int64>(0), buffer, 0, buffer.getNumSamples());
-    }
+    
+    spectrumAnalyser.getNextAudioBlock(buffer);
 
 }
 
