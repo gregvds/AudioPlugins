@@ -165,6 +165,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
     //visualiser.pushBuffer(thumbnail);
+    DBG("Thumbnail: " << thumbnail.getNumSamplesFinished() );
 }
 
 void GainSliderAudioProcessorEditor::resized()

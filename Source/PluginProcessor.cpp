@@ -313,6 +313,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     }
     if (thumbnail != nullptr)
     {
+        // DBG("thumbnail != nullptr");
         thumbnail->addBlock(static_cast<int64>(0), buffer, 0, buffer.getNumSamples());
     }
 
