@@ -164,7 +164,7 @@ void GainSliderAudioProcessorEditor::resized()
     Rectangle<int> slider1 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider2 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider3 = bounds.removeFromLeft(DIALSIZE);
-    Rectangle<int> spectrum = bounds.removeFromRight(SPECTRUMWIDTH);
+    Rectangle<int> spectrum = bounds.removeFromLeft(SPECTRUMWIDTH);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
