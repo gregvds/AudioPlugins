@@ -141,6 +141,12 @@ public:
                 jmap (scopeData[i],     0.0f, 1.0f, (float) height, 0.0f) });
         }
     }
+
+    void paint(Graphics& g) override
+    {
+        drawFrame(g);
+    }
+    
 /*
  declare private member variables required for the FFT implementation as shown below:
  [4]: Declare a dsp::FFT object to perform the forward FFT on.
