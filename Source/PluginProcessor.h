@@ -17,8 +17,6 @@
 #define DELAY_NAME "Delay"
 #define FREQ_ID "freq"
 #define FREQ_NAME "Freq"
-#define Q_ID "q"
-#define Q_NAME "Q"
 #define SEP_ID "sep"
 #define SEP_NAME "Sep"
 #define DGAIN_ID "dgain"
@@ -27,6 +25,8 @@
 #define XGAIN_NAME "Xgain"
 #define ACTIVE_ID "active"
 #define ACTIVE_NAME "Active"
+#define SPECTR_ID "spectrum"
+#define SPECT_NAME "Spectrum"
 #define TYPE_ID "type"
 #define TYPE_NAME "Type"
 

@@ -41,22 +41,21 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     
     auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (200.0f, 320.0f), 270.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
     auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (400.0f, 1000.0f), 700.0f, FREQ_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
-    auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 0.6f), 0.4f, Q_NAME,
-        AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
     auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-6.0f, 0.0f), -4.0f, SEP_NAME,
         AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto dGainParams = std::make_unique<AudioParameterFloat> (DGAIN_ID, DGAIN_NAME, NormalisableRange<float> (-24.0f, 0.0f), 0.0f, DGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto xGainParams = std::make_unique<AudioParameterFloat> (XGAIN_ID, XGAIN_NAME, NormalisableRange<float> (-24.0f, 0.0f), 0.0f, XGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto activeParams = std::make_unique<AudioParameterBool> (ACTIVE_ID, ACTIVE_NAME, true);
+    auto spectrumParams = std::make_unique<AudioParameterBool> (SPECTR_ID, SPECT_NAME, true);
     auto typeParams = std::make_unique<AudioParameterChoice> (TYPE_ID, TYPE_NAME, StringArray {"Shelf", "Pass", "None"}, 0);
     
     params.push_back(std::move(delayParams));
     params.push_back(std::move(freqParams));
-    params.push_back(std::move(qParams));
     params.push_back(std::move(sepParams));
     params.push_back(std::move(dGainParams));
     params.push_back(std::move(xGainParams));
     params.push_back(std::move(activeParams));
+    params.push_back(std::move(spectrumParams));
     params.push_back(std::move(typeParams));
     
     
@@ -204,7 +203,6 @@ bool GainSliderAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 void GainSliderAudioProcessor::updateFilterParameters ()
 {
     auto* sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
-    //auto* sliderQValue = treeState.getRawParameterValue(Q_ID);
     auto* sliderSepValue = treeState.getRawParameterValue(SEP_ID);
     
     auto* filterType = treeState.getRawParameterValue(TYPE_ID);
@@ -216,7 +214,8 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     }
     else if (*filterType == 1)
     {
-        // low pass and highpass
+        *iirLowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, 0.3f);
+        *iirHighPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, 0.3f);
     }
     else if (*filterType == 2)
     {
@@ -308,9 +307,11 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mWritePosition += buffer.getNumSamples();
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
-    
-    spectrumAnalyser.getNextAudioBlock(buffer);
-
+    auto* spectrumState = treeState.getRawParameterValue(SPECTR_ID);
+    if (*spectrumState == true)
+    {
+        spectrumAnalyser.getNextAudioBlock(buffer);
+    }
 }
 
 //==============================================================================
@@ -370,9 +371,9 @@ void GainSliderAudioProcessor::getStateInformation (MemoryBlock& destData)
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
     /*
-    ScopedPointer<XmlElement> xml (treeState.state.createXml());
-    copyXmlToBinary(*xml, destData);
-     */
+    MemoryOutputStream stream(destData, false);
+    treeState.state.writeToStream (stream);
+    */
 }
 
 void GainSliderAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -380,15 +381,12 @@ void GainSliderAudioProcessor::setStateInformation (const void* data, int sizeIn
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
     /*
-    ScopedPointer<XmlElement> loadedParameters (getXmlFromBinary(data, sizeInBytes));
-    if (loadedParameters != nullptr)
+    ValueTree tree = ValueTree::readFromData (data, size_t (sizeInBytes));
+    if (tree.isValid())
     {
-        if (loadedParameters -> hasTagName(treeState.state.getType()))
-        {
-            treeState.state = ValueTree::fromXml(*loadedParameters);
-        }
+        treeState.state = tree;
     }
-     */
+    */
 }
 
 //==============================================================================

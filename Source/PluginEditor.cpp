@@ -20,15 +20,16 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     // Size is dynamic regarding the number of objects
+    // setResizable (true, true);
     setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT);
     
     delaySliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DELAY_ID, delaySlider);
     freqSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, FREQ_ID, frequencySlider);
-    qSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, Q_ID, qSlider);
     sepSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, SEP_ID, separationSlider);
     directGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DGAIN_ID, directGainSlider);
     xfeedGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, XGAIN_ID, xfeedGainSlider);
-    ActiveStateToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, ACTIVE_ID, ActiveStateToggleButton);
+    activeStateToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, ACTIVE_ID, activeStateToggleButton);
+    spectrumToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, SPECTR_ID, spectrumAnalyserToggleButton);
     filterTypeMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, TYPE_ID, filterTypeMenu);
 
     crossFeedMenu.addItem("Full", 1);
@@ -59,6 +60,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     delaySlider.setTooltip(TRANS ("Delay time"));
     addAndMakeVisible(delaySlider);
     delayLabel.setText("Crossfeed delay", NotificationType::dontSendNotification);
+    delayLabel.setLookAndFeel(&labelLookAndFeel);
     delayLabel.attachToComponent(&delaySlider, false);
     delayLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(delayLabel);
@@ -73,25 +75,12 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencySlider.setTooltip(TRANS ("Crossfeed cutoff frequency"));
     addAndMakeVisible(frequencySlider);
     frequencyLabel.setText("Cutoff frequency", NotificationType::dontSendNotification);
+    frequencyLabel.setLookAndFeel(&labelLookAndFeel);
     frequencyLabel.attachToComponent(&frequencySlider, false);
     frequencyLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(frequencyLabel);
     
-    qSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
-    qSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
-    qSlider.setTextValueSuffix(" Q");
-    qSlider.setRange(0.1f, 0.6f);
-    qSlider.setValue(0.4f);
-    qSlider.setSkewFactorFromMidPoint(0.4f);
-    qSlider.addListener(this);
-    qSlider.setTooltip(TRANS ("Filter Q value"));
-    addAndMakeVisible(qSlider);
-    qLabel.setText("Q factor", NotificationType::dontSendNotification);
-    qLabel.attachToComponent(&qSlider, false);
-    qLabel.setJustificationType(Justification::centredBottom);
-    addAndMakeVisible(qLabel);
-    
-    separationSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
+    separationSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     separationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     separationSlider.setTextValueSuffix(" dB");
     separationSlider.setRange(-6.0f, 0.0f);
@@ -101,6 +90,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     separationSlider.setTooltip(TRANS ("Separation between direct and crossfeed signals"));
     addAndMakeVisible(separationSlider);
     separationLabel.setText("Separation", NotificationType::dontSendNotification);
+    separationLabel.setLookAndFeel(&labelLookAndFeel);
     separationLabel.attachToComponent(&separationSlider, false);
     separationLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(separationLabel);
@@ -114,6 +104,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setTooltip(TRANS ("Direct signal attenuation"));
     addAndMakeVisible(directGainSlider);
     directGainLabel.setText("Direct signal", NotificationType::dontSendNotification);
+    directGainLabel.setLookAndFeel(&labelLookAndFeel);
     directGainLabel.attachToComponent(&directGainSlider, false);
     directGainLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(directGainLabel);
@@ -127,17 +118,23 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedGainSlider.setTooltip(TRANS ("Xfeed signal attenuation"));
     addAndMakeVisible(xfeedGainSlider);
     xfeedGainLabel.setText("Xfeed signal", NotificationType::dontSendNotification);
+    xfeedGainLabel.setLookAndFeel(&labelLookAndFeel);
     xfeedGainLabel.attachToComponent(&xfeedGainSlider, false);
     xfeedGainLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(xfeedGainLabel);
 
-    ActiveStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
-    addAndMakeVisible(ActiveStateToggleButton);
+    activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
+    activeStateToggleButton.setClickingTogglesState(true);
+    addAndMakeVisible(activeStateToggleButton);
+    
+    spectrumAnalyserToggleButton.setToggleState(true, NotificationType::dontSendNotification);
+    spectrumAnalyserToggleButton.setClickingTogglesState(true);
+    spectrumAnalyserToggleButton.addListener(this);
+    addAndMakeVisible(spectrumAnalyserToggleButton);
     
     delaySlider.setLookAndFeel(&rotaryLookAndFeel);
     frequencySlider.setLookAndFeel(&rotaryLookAndFeel);
-    qSlider.setLookAndFeel(&rotaryLookAndFeel);
-    separationSlider.setLookAndFeel(&verticalLookAndFeel);
+    separationSlider.setLookAndFeel(&rotaryLookAndFeel);
     directGainSlider.setLookAndFeel(&verticalLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
     
@@ -153,7 +150,6 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
-    //processor.spectrumAnalyser.drawFrame(g);
 }
 
 void GainSliderAudioProcessorEditor::resized()
@@ -164,21 +160,20 @@ void GainSliderAudioProcessorEditor::resized()
     Rectangle<int> slider1 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider2 = bounds.removeFromLeft(DIALSIZE);
     Rectangle<int> slider3 = bounds.removeFromLeft(DIALSIZE);
-    Rectangle<int> spectrum = bounds.removeFromLeft(SPECTRUMWIDTH);
+    spectrumFrame = bounds.removeFromLeft(SPECTRUMWIDTH);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
-    ActiveStateToggleButton.setBounds(menu);
+    activeStateToggleButton.setBounds(menu.removeFromLeft(DIALSIZE));
+    spectrumAnalyserToggleButton.setBounds(menu.removeFromLeft(DIALSIZE));
     
     delayLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
     delaySlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
     frequencyLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
     frequencySlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
-    qLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    qSlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
     
-    separationLabel.setBounds(slider1.removeFromTop(LABELHEIGHT));
-    separationSlider.setBounds(slider1);
+    separationLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
+    separationSlider.setBounds(dials);
 
     directGainLabel.setBounds(slider2.removeFromTop(LABELHEIGHT));
     directGainSlider.setBounds(slider2);
@@ -186,12 +181,27 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
     xfeedGainSlider.setBounds(slider3);
     
-    processor.spectrumAnalyser.setBounds(spectrum);
+    processor.spectrumAnalyser.setBounds(spectrumFrame);
 
 }
 
 //==============================================================================
 // Unavoidable methods that must be instanciated, even if not used
+void GainSliderAudioProcessorEditor::buttonClicked(Button *toggleButton)
+{
+    if (toggleButton == &spectrumAnalyserToggleButton)
+    {
+        if (toggleButton->getToggleState())
+        {
+            setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT);
+        }
+        else
+        {
+            setSize (4* DIALSIZE, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT);
+        }
+    }
+}
+
 void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
 {
     if (comboBox == &crossFeedMenu)
@@ -200,21 +210,18 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
         {
             delaySlider.setValue(320.0f);
             frequencySlider.setValue(600.0f);
-            qSlider.setValue(0.5f);
             separationSlider.setValue(-5.0f);
         }
         else if (comboBox->getSelectedIdAsValue() == 2)
         {
             delaySlider.setValue(270.0f);
             frequencySlider.setValue(700.0f);
-            qSlider.setValue(0.4f);
             separationSlider.setValue(-4.0f);
         }
         else if (comboBox->getSelectedIdAsValue() == 3)
         {
             delaySlider.setValue(230.0f);
             frequencySlider.setValue(800.0f);
-            qSlider.setValue(0.3f);
             separationSlider.setValue(-2.5f);
         }
     }
