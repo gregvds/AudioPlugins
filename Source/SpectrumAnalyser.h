@@ -13,7 +13,6 @@
 
 static float mindB = -100.0f;
 static float maxdB =    0.0f;
-static Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
 
 class SpectrumAnalyser : public Component,
                          private Timer
@@ -147,6 +146,7 @@ public:
     {
         drawingArea = getLocalBounds().reduced (3, 3);
         
+        
         // Silver frame around RT spectrum analysis
         g.setFont (12.0f);
         g.setColour (Colours::silver);
@@ -191,6 +191,16 @@ public:
         return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
     }
 
+    float getPositionForGain (float gain, float top, float bottom)
+    {
+        return jmap (Decibels::gainToDecibels (gain, mindB), mindB, maxdB, bottom, top);
+    }
+    
+    float getGainForPosition (float pos, float top, float bottom)
+    {
+        return Decibels::decibelsToGain (jmap (pos, bottom, top, mindB, maxdB), mindB);
+    }
+    
     float getDBForPosition (float pos, float top, float bottom)
     {
         return jmap (pos, bottom, top, mindB, maxdB);
@@ -216,7 +226,9 @@ private:
     bool nextFFTBlockReady = false;       // [9]
     float scopeData [scopeSize];          // [10]
     
+    Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
     Rectangle<int> drawingArea;
+    
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SpectrumAnalyser)

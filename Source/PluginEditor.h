@@ -13,13 +13,15 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "SpectrumAnalyser.h"
+#include "FilterGraphics.h"
 
 #define DIALSIZE 100
 #define SLIDERSIZE 200
 #define TEXTBOXWIDTH 80
 #define TEXTBOXHEIGT 20
 #define LABELHEIGHT 20
-#define SPECTRUMWIDTH 500
+#define SPECTRUMWIDTH 800
+#define SPECTRUMHEIGHT 300
 
 //==============================================================================
 /**
@@ -105,7 +107,8 @@ private:
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
-    Rectangle<int> spectrumFrame;
+    Rectangle<int> spectrumFrame1;
+    Rectangle<int> spectrumFrame2;
     
 public:
     // Things public to be destroyed before private stuff.

@@ -21,7 +21,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     // editor's size to whatever you need it to be.
     // Size is dynamic regarding the number of objects
     // setResizable (true, true);
-    setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT);
+    setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT);
     
     delaySliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DELAY_ID, delaySlider);
     freqSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, FREQ_ID, frequencySlider);
@@ -138,7 +138,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setLookAndFeel(&verticalLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
     
+    addAndMakeVisible(processor.filterGraphics);
     addAndMakeVisible(processor.spectrumAnalyser);
+    
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -156,11 +158,13 @@ void GainSliderAudioProcessorEditor::resized()
 {
     Rectangle<int> bounds = getLocalBounds();
     Rectangle<int> menu = bounds.removeFromTop(TEXTBOXHEIGT);
-    Rectangle<int> dials = bounds.removeFromLeft(DIALSIZE);
-    Rectangle<int> slider1 = bounds.removeFromLeft(DIALSIZE);
-    Rectangle<int> slider2 = bounds.removeFromLeft(DIALSIZE);
-    Rectangle<int> slider3 = bounds.removeFromLeft(DIALSIZE);
-    spectrumFrame = bounds.removeFromLeft(SPECTRUMWIDTH);
+    Rectangle<int> topPanel = bounds.removeFromTop(3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT)).reduced(3,3);
+    Rectangle<int> dials = topPanel.removeFromLeft(DIALSIZE);
+    Rectangle<int> slider1 = topPanel.removeFromLeft(DIALSIZE);
+    Rectangle<int> slider2 = topPanel.removeFromLeft(DIALSIZE);
+    Rectangle<int> slider3 = topPanel.removeFromLeft(DIALSIZE);
+    spectrumFrame1 = topPanel.removeFromLeft(SPECTRUMWIDTH);
+    spectrumFrame2 = bounds;
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
@@ -181,7 +185,8 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
     xfeedGainSlider.setBounds(slider3);
     
-    processor.spectrumAnalyser.setBounds(spectrumFrame);
+    processor.filterGraphics.setBounds(spectrumFrame1);
+    processor.spectrumAnalyser.setBounds(spectrumFrame2);
 
 }
 
@@ -193,7 +198,7 @@ void GainSliderAudioProcessorEditor::buttonClicked(Button *toggleButton)
     {
         if (toggleButton->getToggleState())
         {
-            setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT);
+            setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT);
         }
         else
         {

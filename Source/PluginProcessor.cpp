@@ -146,6 +146,7 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     mDelayBuffer.clear();
     
     mSampleRate = sampleRate;
+    mSamplesPerBlock = samplesPerBlock;
     
     // Initialisation of the spec for the process duplicators of the filters
     dsp::ProcessSpec spec;
@@ -209,18 +210,24 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     
     if (*filterType == 0)
     {
-        *iirLowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, 1.1f, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
-        *iirHighPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, 1.1f, Decibels::decibelsToGain(*sliderSepValue));
+        //DBG("Frequency value: " << *sliderFreqValue);
+        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, 1.0f, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
+        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, 1.0f, Decibels::decibelsToGain(*sliderSepValue));
     }
     else if (*filterType == 1)
     {
-        *iirLowPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, 0.3f);
-        *iirHighPassFilterDuplicator.state = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, 0.3f);
+        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, 0.3f);
+        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, 0.3f);
     }
     else if (*filterType == 2)
     {
         // No filtering
     }
+    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.freq, filterGraphics.gain, filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.freq, filterGraphics.phase, filterGraphics.scopeSize, mSampleRate);
+    *iirLowPassFilterDuplicator.state = iirCoefficientsXfeed;
+    *iirHighPassFilterDuplicator.state = iirCoefficientsDirect;
+
 }
 
 void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)

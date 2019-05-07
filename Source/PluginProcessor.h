@@ -12,6 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "SpectrumAnalyser.h"
+#include "FilterGraphics.h"
 
 #define DELAY_ID "delay"
 #define DELAY_NAME "Delay"
@@ -41,6 +42,9 @@ public:
     //==============================================================================
     GainSliderAudioProcessor();
     ~GainSliderAudioProcessor();
+
+    SpectrumAnalyser spectrumAnalyser;
+    FilterGraphics filterGraphics;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -84,8 +88,6 @@ public:
     AudioProcessorValueTreeState treeState;
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
-    SpectrumAnalyser spectrumAnalyser;
-    
 private:
     // Audio buffer for filtering the crossfeed signal only
     AudioBuffer<float> mFilterBuffer;
@@ -96,7 +98,12 @@ private:
     
     // Variables useful for the delay buffer
     int mWritePosition { 0 };
-    double mSampleRate {44100};
+    int mSamplesPerBlock { 512 };
+    double mSampleRate { 44100 };
+    
+    // Useful to get magnitude and phase of the filters
+    dsp::IIR::Coefficients<float> iirCoefficientsXfeed;
+    dsp::IIR::Coefficients<float> iirCoefficientsDirect;
     
     // Processor duplicators for the filters
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirLowPassFilterDuplicator;
