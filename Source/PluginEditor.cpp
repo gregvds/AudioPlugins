@@ -11,6 +11,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
 //==============================================================================
 GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
@@ -25,6 +26,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     delaySliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DELAY_ID, delaySlider);
     freqSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, FREQ_ID, frequencySlider);
+    qSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, Q_ID, qSlider);
     sepSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, SEP_ID, separationSlider);
     directGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DGAIN_ID, directGainSlider);
     xfeedGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, XGAIN_ID, xfeedGainSlider);
@@ -80,7 +82,22 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencyLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(frequencyLabel);
     
-    separationSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+    qSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+    qSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
+    qSlider.setTextValueSuffix(" Q");
+    qSlider.setRange(0.1f, 1.0f);
+    qSlider.setValue(0.5f);
+    qSlider.setSkewFactorFromMidPoint(0.3f);
+    qSlider.addListener(this);
+    qSlider.setTooltip(TRANS ("Filter quality"));
+    addAndMakeVisible(qSlider);
+    qLabel.setText("Quality", NotificationType::dontSendNotification);
+    qLabel.setLookAndFeel(&labelLookAndFeel);
+    qLabel.attachToComponent(&qSlider, false);
+    qLabel.setJustificationType(Justification::centredBottom);
+    addAndMakeVisible(qLabel);
+
+    separationSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     separationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     separationSlider.setTextValueSuffix(" dB");
     separationSlider.setRange(-6.0f, 0.0f);
@@ -134,9 +151,10 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     delaySlider.setLookAndFeel(&rotaryLookAndFeel);
     frequencySlider.setLookAndFeel(&rotaryLookAndFeel);
+    qSlider.setLookAndFeel(&rotaryLookAndFeel);
     separationSlider.setLookAndFeel(&rotaryLookAndFeel);
-    directGainSlider.setLookAndFeel(&verticalLookAndFeel);
-    xfeedGainSlider.setLookAndFeel(&verticalLookAndFeel);
+    directGainSlider.setLookAndFeel(&directLookAndFeel);
+    xfeedGainSlider.setLookAndFeel(&xfeedLookAndFeel);
     
     addAndMakeVisible(processor.filterGraphics);
     addAndMakeVisible(processor.spectrumAnalyser);
@@ -175,9 +193,11 @@ void GainSliderAudioProcessorEditor::resized()
     delaySlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
     frequencyLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
     frequencySlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
+    qLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
+    qSlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
     
-    separationLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    separationSlider.setBounds(dials);
+    separationLabel.setBounds(slider1.removeFromTop(LABELHEIGHT));
+    separationSlider.setBounds(slider1);
 
     directGainLabel.setBounds(slider2.removeFromTop(LABELHEIGHT));
     directGainSlider.setBounds(slider2);
@@ -186,7 +206,7 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainSlider.setBounds(slider3);
     
     processor.filterGraphics.setBounds(spectrumFrame1);
-    processor.spectrumAnalyser.setBounds(spectrumFrame2);
+    //processor.spectrumAnalyser.setBounds(spectrumFrame2);
 
 }
 

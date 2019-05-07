@@ -23,6 +23,10 @@
 #define SPECTRUMWIDTH 800
 #define SPECTRUMHEIGHT 300
 
+//static Colour xfeedColour = Colour(0xFFe5d865);
+////Colour directColour = Colour(0xFFe5e27e);
+//static Colour directColour = Colour(0xFFfbb040);
+
 //==============================================================================
 /**
  Classes to contain look and feel customizations for different types of sliders
@@ -44,6 +48,26 @@ public:
     VerticalLookAndFeel()
     {
         setColour(Slider::ColourIds::thumbColourId, Colours::khaki);
+    }
+    
+};
+
+class XfeedLookAndFeel : public LookAndFeel_V4
+{
+public:
+    XfeedLookAndFeel()
+    {
+        setColour(Slider::ColourIds::thumbColourId, xfeedColour);
+    }
+    
+};
+
+class DirectLookAndFeel : public LookAndFeel_V4
+{
+public:
+    DirectLookAndFeel()
+    {
+        setColour(Slider::ColourIds::thumbColourId, directColour);
     }
     
 };
@@ -85,6 +109,8 @@ private:
     // These must be declared before the components using them
     RotaryLookAndFeel rotaryLookAndFeel;
     VerticalLookAndFeel verticalLookAndFeel;
+    XfeedLookAndFeel xfeedLookAndFeel;
+    DirectLookAndFeel directLookAndFeel;
     LabelLookAndFeel labelLookAndFeel;
     
     ComboBox crossFeedMenu;
@@ -92,12 +118,14 @@ private:
     
     Slider delaySlider;
     Slider frequencySlider;
+    Slider qSlider;
     Slider separationSlider;
     Slider directGainSlider;
     Slider xfeedGainSlider;
     
     Label delayLabel;
     Label frequencyLabel;
+    Label qLabel;
     Label separationLabel;
     Label directGainLabel;
     Label xfeedGainLabel;
@@ -115,6 +143,7 @@ public:
     // Destruction operates on a bottom to top of the code order.
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> delaySliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> freqSliderAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> qSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> sepSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> directGainSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> xfeedGainSliderAttach;

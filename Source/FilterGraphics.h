@@ -9,6 +9,9 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
+static Colour xfeedColour = Colour(0xFFe5d865);
+//Colour directColour = Colour(0xFFe5e27e);
+static Colour directColour = Colour(0xFFfbb040);
 
 class FilterGraphics : public Component,
                        public Timer
@@ -39,32 +42,34 @@ public:
 //==============================================================================
     void drawFrame (Graphics& g)
     {
+        auto width1  = graph1.getWidth();
+        auto height1 = graph1.getHeight();
+        auto y2      = graph2.getY();
+        auto width2  = graph2.getWidth();
+        auto height2 = graph2.getHeight();
+        
         for (int i = 1; i < scopeSize; ++i)
         {
-            auto width1  = graph1.getWidth();
-            auto height1 = graph1.getHeight();
-            auto y2      = graph2.getY();
-            auto width2  = graph2.getWidth();
-            auto height2 = graph2.getHeight();
-
-            
-            // Draw Amp vs freq of filter
-            g.drawLine ({ (float)
-                jmap ((float)freq[i - 1], minFreq, maxFreq, 3.0f, (float) width1 + 3.0f),
-                jmap (Decibels::gainToDecibels((float)gain[i - 1]), mindB, maxdB, (float) height1, 0.0f),
-                (float)
-                jmap ((float)freq[i], minFreq, maxFreq, 3.0f, (float) width1 + 3.0f),
-                jmap (Decibels::gainToDecibels((float)gain[i]), mindB, maxdB, (float) height1, 0.0f) });
-            // Draw Phase vs freq of filter
-            g.drawLine ({ (float)
-                jmap ((float)freq[i - 1], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
-                jmap ((float)phase[i - 1], minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f),
-                (float)
-                jmap ((float)freq[i], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
-                jmap ((float)phase[i], minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f) });
+            for (int j = 0; j < 2; j++)
+            {
+                g.setColour (colours[j]);
+                // Draw Amp vs freq of filter
+                g.drawLine ({ (float)
+                    jmap ((float)freq[i - 1], minFreq, maxFreq, 3.0f, (float) width1 + 3.0f),
+                    jmap (Decibels::gainToDecibels((float)gain[j][i - 1]), mindB, maxdB, (float) height1 + 6.0f, 6.0f),
+                    (float)
+                    jmap ((float)freq[i], minFreq, maxFreq, 3.0f, (float) width1 + 3.0f),
+                    jmap (Decibels::gainToDecibels((float)gain[j][i]), mindB, maxdB, (float) height1 + 6.0f, 6.0f) });
+                // Draw Phase vs freq of filter
+                g.drawLine ({ (float)
+                    jmap ((float)freq[i - 1], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
+                    jmap ((float)phase[j][i - 1], minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f),
+                    (float)
+                    jmap ((float)freq[i], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
+                    jmap ((float)phase[j][i], minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f) });
+            }
         }
     }
-    
 
     void paint(Graphics& g) override
     {
@@ -118,7 +123,6 @@ public:
         }
 
         // draw the curves
-        g.setColour (Colours::seashell);
         drawFrame(g);
        
 //==============================================================================
@@ -169,27 +173,31 @@ private:
         {
             freq[scopeIndex] = computedFreq;
             computedFreq *= pow(10.0f, 1.0 / stepsPerDecuple);
-            gain[scopeIndex] = 0.0f;
-            phase[scopeIndex] = 0.0f;
+            gain[0][scopeIndex] = 0.0f;
+            phase[0][scopeIndex] = 0.0f;
+            gain[1][scopeIndex] = 0.0f;
+            phase[1][scopeIndex] = 0.0f;
             DBG("freq added: " << freq[scopeIndex]);
             scopeIndex++;
         }
         if (freq[scopeIndex--] < maxFreq)
         {
             freq[scopeIndex] = maxFreq;
-            gain[scopeIndex] = 0.0f;
-            phase[scopeIndex] = 0.0f;
+            gain[0][scopeIndex] = 0.0f;
+            phase[0][scopeIndex] = 0.0f;
+            gain[1][scopeIndex] = 0.0f;
+            phase[1][scopeIndex] = 0.0f;
             DBG("freq added: " << freq[scopeIndex]);
         }
         scopeIndex = 0;
         
-        DBG("freq size: " << sizeof(freq)/sizeof(double));
-        for (int i=0; i < scopeSize; i++)
-        {
-            DBG("" << freq[i]);
-            DBG("" << gain[i]);
-            DBG("" << phase[i]);
-        }
+//        DBG("freq size: " << sizeof(freq)/sizeof(double));
+//        for (int i=0; i < scopeSize; i++)
+//        {
+//            DBG("" << freq[i]);
+//            DBG("" << gain[i]);
+//            DBG("" << phase[i]);
+//        }
     }
     
 //==============================================================================
@@ -211,11 +219,14 @@ private:
     Rectangle<int> graph1;
     Rectangle<int> graph2;
     
+    Array<Colour> colours = {xfeedColour, directColour};
+    
 //==============================================================================
 public:
     double freq [scopeSize];
-    double gain [scopeSize];
-    double phase [scopeSize];
+    double gain [2][scopeSize];
+    double phase [2][scopeSize];
+    
     int scopeIndex = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilterGraphics)

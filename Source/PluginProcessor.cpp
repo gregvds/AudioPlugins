@@ -41,6 +41,7 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     
     auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (200.0f, 320.0f), 270.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
     auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (400.0f, 1000.0f), 700.0f, FREQ_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
+    auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 1.0f), 0.5f, Q_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
     auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-6.0f, 0.0f), -4.0f, SEP_NAME,
         AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto dGainParams = std::make_unique<AudioParameterFloat> (DGAIN_ID, DGAIN_NAME, NormalisableRange<float> (-24.0f, 0.0f), 0.0f, DGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
@@ -51,6 +52,7 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     
     params.push_back(std::move(delayParams));
     params.push_back(std::move(freqParams));
+    params.push_back(std::move(qParams));
     params.push_back(std::move(sepParams));
     params.push_back(std::move(dGainParams));
     params.push_back(std::move(xGainParams));
@@ -204,6 +206,7 @@ bool GainSliderAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 void GainSliderAudioProcessor::updateFilterParameters ()
 {
     auto* sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
+    auto* sliderqValue = treeState.getRawParameterValue(Q_ID);
     auto* sliderSepValue = treeState.getRawParameterValue(SEP_ID);
     
     auto* filterType = treeState.getRawParameterValue(TYPE_ID);
@@ -211,8 +214,8 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     if (*filterType == 0)
     {
         //DBG("Frequency value: " << *sliderFreqValue);
-        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, 1.0f, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
-        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, 1.0f, Decibels::decibelsToGain(*sliderSepValue));
+        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
+        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(*sliderSepValue));
     }
     else if (*filterType == 1)
     {
@@ -223,8 +226,10 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     {
         // No filtering
     }
-    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.freq, filterGraphics.gain, filterGraphics.scopeSize, mSampleRate);
-    iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.freq, filterGraphics.phase, filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.freq, filterGraphics.gain[0], filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.freq, filterGraphics.phase[0], filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.freq, filterGraphics.gain[1], filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsDirect.getPhaseForFrequencyArray(filterGraphics.freq, filterGraphics.phase[1], filterGraphics.scopeSize, mSampleRate);
     *iirLowPassFilterDuplicator.state = iirCoefficientsXfeed;
     *iirHighPassFilterDuplicator.state = iirCoefficientsDirect;
 

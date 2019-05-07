@@ -18,6 +18,8 @@
 #define DELAY_NAME "Delay"
 #define FREQ_ID "freq"
 #define FREQ_NAME "Freq"
+#define Q_ID "q"
+#define Q_NAME "Q"
 #define SEP_ID "sep"
 #define SEP_NAME "Sep"
 #define DGAIN_ID "dgain"
