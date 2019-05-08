@@ -176,13 +176,13 @@ void GainSliderAudioProcessorEditor::resized()
 {
     Rectangle<int> bounds = getLocalBounds();
     Rectangle<int> menu = bounds.removeFromTop(TEXTBOXHEIGT);
-    Rectangle<int> topPanel = bounds.removeFromTop(3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT)).reduced(3,3);
+    Rectangle<int> topPanel = bounds.removeFromTop(3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT)); //.reduced(3,3);
     Rectangle<int> dials = topPanel.removeFromLeft(DIALSIZE);
     Rectangle<int> slider1 = topPanel.removeFromLeft(DIALSIZE);
     Rectangle<int> slider2 = topPanel.removeFromLeft(DIALSIZE);
     Rectangle<int> slider3 = topPanel.removeFromLeft(DIALSIZE);
     spectrumFrame1 = topPanel.removeFromLeft(SPECTRUMWIDTH);
-    spectrumFrame2 = bounds;
+    spectrumFrame2 = bounds.removeFromTop(SPECTRUMHEIGHT);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
@@ -206,7 +206,7 @@ void GainSliderAudioProcessorEditor::resized()
     xfeedGainSlider.setBounds(slider3);
     
     processor.filterGraphics.setBounds(spectrumFrame1);
-    //processor.spectrumAnalyser.setBounds(spectrumFrame2);
+    processor.spectrumAnalyser.setBounds(spectrumFrame2);
 
 }
 

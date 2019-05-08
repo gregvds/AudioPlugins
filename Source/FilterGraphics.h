@@ -63,10 +63,10 @@ public:
                 // Draw Phase vs freq of filter
                 g.drawLine ({ (float)
                     jmap ((float)freq[i - 1], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
-                    jmap ((float)phase[j][i - 1], minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f),
+                    jmap (getTimeForPhase((float)phase[j][i - 1], (float)freq[i - 1]), minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f),
                     (float)
                     jmap ((float)freq[i], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
-                    jmap ((float)phase[j][i], minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f) });
+                    jmap (getTimeForPhase((float)phase[j][i], (float)freq[i]), minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f) });
             }
         }
     }
@@ -119,7 +119,7 @@ public:
             g.drawHorizontalLine (roundToInt (y), graph2.getX(), graph2.getRight());
             g.setColour (Colours::silver);
             //auto dB = getDBForPosition(y, graph1.getY(), graph1.getBottom());
-            g.drawFittedText (String (phaseScale[i]) + " °", graph2.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
+            g.drawFittedText (String (phaseScale[i]) + " µs", graph2.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
         }
 
         // draw the curves
@@ -127,6 +127,12 @@ public:
        
 //==============================================================================
     }
+    
+    float getTimeForPhase(float phase, float freq)
+    {
+        return (-phase / MathConstants<float>::twoPi) * (1000000.0f / freq);
+    }
+    
     float getPositionForPhase(float phase, float top, float bottom)
     {
         return jmap(phase, minPhase, maxPhase, bottom, top);
@@ -177,7 +183,7 @@ private:
             phase[0][scopeIndex] = 0.0f;
             gain[1][scopeIndex] = 0.0f;
             phase[1][scopeIndex] = 0.0f;
-            DBG("freq added: " << freq[scopeIndex]);
+            //DBG("freq added: " << freq[scopeIndex]);
             scopeIndex++;
         }
         if (freq[scopeIndex--] < maxFreq)
@@ -187,7 +193,7 @@ private:
             phase[0][scopeIndex] = 0.0f;
             gain[1][scopeIndex] = 0.0f;
             phase[1][scopeIndex] = 0.0f;
-            DBG("freq added: " << freq[scopeIndex]);
+            //DBG("freq added: " << freq[scopeIndex]);
         }
         scopeIndex = 0;
         
@@ -204,16 +210,18 @@ private:
 
     float minFreq = 20.0f;
     float maxFreq = 20000.0f;
+    Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
     
     float mindB = -10.0f;
     float maxdB = 10.0f;
-    
-    float maxPhase = MathConstants<float>::twoPi;
-    float minPhase = -1.0f * maxPhase;
-    
-    Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
     Array<float> dBScale = {-6.0f, -3.0f, 0.0f, 3.0f, 6.0f};
-    Array<float> phaseScale = {-1.0f * MathConstants<float>::pi, 0.0f, MathConstants<float>::pi};
+
+//    float maxPhase = MathConstants<float>::twoPi;
+//    float minPhase = -1.0f * maxPhase;
+//    Array<float> phaseScale = {-1.0f * MathConstants<float>::pi, 0.0f, MathConstants<float>::pi};
+    float maxPhase = 500.0f;
+    float minPhase = -maxPhase;
+    Array<float> phaseScale = {minPhase/5, minPhase*2/5, minPhase*3/5, minPhase*4/5, 0.0f, maxPhase/5, maxPhase*2/5, maxPhase*3/5, maxPhase*4/5};
 
     Rectangle<int> drawingArea;
     Rectangle<int> graph1;

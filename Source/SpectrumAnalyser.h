@@ -11,9 +11,6 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-static float mindB = -100.0f;
-static float maxdB =    0.0f;
-
 class SpectrumAnalyser : public Component,
                          private Timer
 {
@@ -27,6 +24,7 @@ public:
     {
 
         startTimerHz (30);
+        drawingArea = getLocalBounds();
     }
     
     ~SpectrumAnalyser()
@@ -119,10 +117,19 @@ public:
         for (int i = 0; i < scopeSize; ++i)                        // [3]
         {
             auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - i / (float) scopeSize) * 0.2f);
-            auto fftDataIndex = jlimit (0, fftSize / 2, (int) (skewedProportionX * fftSize / 2));
-            auto level = jmap (jlimit (mindB, maxdB, Decibels::gainToDecibels (fftData[fftDataIndex])
-                                       - Decibels::gainToDecibels ((float) fftSize)),
-                               mindB, maxdB, 0.0f, 1.0f);
+            auto fftDataIndex = jlimit (0,
+                                        fftSize / 2,
+                                        (int) (skewedProportionX * fftSize / 2));
+            auto level = jmap (
+                               jlimit (mindB,
+                                       maxdB,
+                                       Decibels::gainToDecibels (fftData[fftDataIndex])
+                                       - Decibels::gainToDecibels ((float) fftSize)
+                                       ),
+                               mindB,
+                               maxdB,
+                               0.0f,
+                               1.0f);
             scopeData[i] = level;                                  // [4]
         }
     }
@@ -131,14 +138,17 @@ public:
 */
     void drawFrame (Graphics& g)
     {
+        auto width  = drawingArea.getWidth();
+        auto height = drawingArea.getHeight();
+        auto y      = drawingArea.getY();
         for (int i = 1; i < scopeSize; ++i)
         {
-            auto width  = drawingArea.getWidth();
-            auto height = drawingArea.getHeight();
-            g.drawLine ({ (float) jmap (i - 1, 0, scopeSize - 1, 3, width+3),
-                jmap (scopeData[i - 1], 0.0f, 1.0f, (float) height, 0.0f),
-                (float) jmap (i,     0, scopeSize - 1, 3, width+3),
-                jmap (scopeData[i],     0.0f, 1.0f, (float) height, 0.0f) });
+            float x1 = (float) jmap ((float)i - 1.0f,  0.0f,   (float)(scopeSize - 1), 3.0f,           (float) width + 3.0f);
+            float y1 = jmap (jlimit(0.0f, 1.0f, scopeData[i - 1]), 0.0f,   1.0f,                   (float) y + height, y + 0.0f);
+            float x2 = (float) jmap ((float)i,         0.0f,   (float)(scopeSize - 1), 3.0f,           (float) width + 3.0f);
+            float y2 = jmap (jlimit(0.0f, 1.0f, scopeData[i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
+            
+            g.drawLine ({ x1, y1, x2, y2});
         }
     }
 
@@ -172,9 +182,7 @@ public:
             g.setColour (Colours::silver);
             auto dB = getDBForPosition(y, drawingArea.getY(), drawingArea.getBottom());
             g.drawFittedText (String (dB) + " dB", drawingArea.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
-            
         }
-
         g.setColour (Colours::seashell);
         
         drawFrame(g);
@@ -225,6 +233,9 @@ private:
     int fifoIndex = 0;                    // [8]
     bool nextFFTBlockReady = false;       // [9]
     float scopeData [scopeSize];          // [10]
+    
+    float mindB = -100.0f;
+    float maxdB =    0.0f;
     
     Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
     Rectangle<int> drawingArea;
