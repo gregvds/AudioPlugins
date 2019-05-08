@@ -55,9 +55,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     delaySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     delaySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     delaySlider.setTextValueSuffix(" microsec");
-    delaySlider.setRange(200.0f, 320.0f);
-    delaySlider.setValue(270.0f);
-    delaySlider.setSkewFactorFromMidPoint(270.0f);
+    delaySlider.setRange(0.0f, 320.0f);
+    delaySlider.setValue(100.0f);
+    delaySlider.setSkewFactorFromMidPoint(50.0f);
     delaySlider.addListener(this);
     delaySlider.setTooltip(TRANS ("Delay time"));
     addAndMakeVisible(delaySlider);
@@ -115,7 +115,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     directGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     directGainSlider.setTextValueSuffix(" dB");
-    directGainSlider.setRange(-24.0f, 0.0f);
+    directGainSlider.setRange(-10.0f, 10.0f);
     directGainSlider.setValue(0.0f);
     directGainSlider.addListener(this);
     directGainSlider.setTooltip(TRANS ("Direct signal attenuation"));
@@ -129,7 +129,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedGainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     xfeedGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     xfeedGainSlider.setTextValueSuffix(" dB");
-    xfeedGainSlider.setRange(-24.0f, 0.0f);
+    xfeedGainSlider.setRange(-10.0f, 10.0f);
     xfeedGainSlider.setValue(0.0f);
     xfeedGainSlider.addListener(this);
     xfeedGainSlider.setTooltip(TRANS ("Xfeed signal attenuation"));

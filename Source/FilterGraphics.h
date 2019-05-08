@@ -10,7 +10,6 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 
 static Colour xfeedColour = Colour(0xFFe5d865);
-//Colour directColour = Colour(0xFFe5e27e);
 static Colour directColour = Colour(0xFFfbb040);
 
 class FilterGraphics : public Component,
@@ -30,7 +29,7 @@ public:
     
     enum
     {
-        stepsPerDecuple = 20,
+        stepsPerDecuple = 50,
         scopeSize = (3 * stepsPerDecuple)
     };
 //==============================================================================
@@ -55,18 +54,18 @@ public:
                 g.setColour (colours[j]);
                 // Draw Amp vs freq of filter
                 g.drawLine ({ (float)
-                    jmap ((float)freq[i - 1], minFreq, maxFreq, 3.0f, (float) width1 + 3.0f),
-                    jmap (Decibels::gainToDecibels((float)gain[j][i - 1]), mindB, maxdB, (float) height1 + 6.0f, 6.0f),
+                    jmap (getPositionForFrequency((float)scopeFreq[i - 1]), 0.0f, 1.0f, 3.0f, (float) width1 + 3.0f),
+                    jmap (jlimit(mindB, maxdB, gains[j] + Decibels::gainToDecibels((float)scopeGain[j][i - 1])), mindB, maxdB, (float) height1 + 6.0f, 6.0f),
                     (float)
-                    jmap ((float)freq[i], minFreq, maxFreq, 3.0f, (float) width1 + 3.0f),
-                    jmap (Decibels::gainToDecibels((float)gain[j][i]), mindB, maxdB, (float) height1 + 6.0f, 6.0f) });
+                    jmap (getPositionForFrequency((float)scopeFreq[i]), 0.0f, 1.0f, 3.0f, (float) width1 + 3.0f),
+                    jmap (jlimit(mindB, maxdB, gains[j] + Decibels::gainToDecibels((float)scopeGain[j][i])), mindB, maxdB, (float) height1 + 6.0f, 6.0f) });
                 // Draw Phase vs freq of filter
                 g.drawLine ({ (float)
-                    jmap ((float)freq[i - 1], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
-                    jmap (getTimeForPhase((float)phase[j][i - 1], (float)freq[i - 1]), minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f),
+                    jmap (getPositionForFrequency((float)scopeFreq[i - 1]), 0.0f, 1.0f, 3.0f, (float) width2 + 3.0f),
+                    jmap (jlimit(minPhase, maxPhase, phases[j] + getTimeForPhase((float)scopePhase[j][i - 1], (float)scopeFreq[i - 1])), minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f),
                     (float)
-                    jmap ((float)freq[i], minFreq, maxFreq, 3.0f, (float) width2 + 3.0f),
-                    jmap (getTimeForPhase((float)phase[j][i], (float)freq[i]), minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f) });
+                    jmap (getPositionForFrequency((float)scopeFreq[i]), 0.0f, 1.0f, 3.0f, (float) width2 + 3.0f),
+                    jmap (jlimit(minPhase, maxPhase, phases[j] + getTimeForPhase((float)scopePhase[j][i], (float)scopeFreq[i])), minPhase, maxPhase, (float) y2 + height2, y2 + 0.0f) });
             }
         }
     }
@@ -106,7 +105,6 @@ public:
             auto y = getPositionForDB(dBScale[i], graph1.getY(), graph1.getBottom());
             g.drawHorizontalLine (roundToInt (y), graph1.getX(), graph1.getRight());
             g.setColour (Colours::silver);
-            //auto dB = getDBForPosition(y, graph1.getY(), graph1.getBottom());
             g.drawFittedText (String (dBScale[i]) + " dB", graph1.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
             
         }
@@ -118,7 +116,6 @@ public:
             auto y = getPositionForPhase(phaseScale[i], graph2.getY(), graph2.getBottom());
             g.drawHorizontalLine (roundToInt (y), graph2.getX(), graph2.getRight());
             g.setColour (Colours::silver);
-            //auto dB = getDBForPosition(y, graph1.getY(), graph1.getBottom());
             g.drawFittedText (String (phaseScale[i]) + " µs", graph2.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
         }
 
@@ -177,33 +174,24 @@ private:
         //int i = 0;
         while (computedFreq <= maxFreq)
         {
-            freq[scopeIndex] = computedFreq;
+            scopeFreq[scopeIndex] = computedFreq;
             computedFreq *= pow(10.0f, 1.0 / stepsPerDecuple);
-            gain[0][scopeIndex] = 0.0f;
-            phase[0][scopeIndex] = 0.0f;
-            gain[1][scopeIndex] = 0.0f;
-            phase[1][scopeIndex] = 0.0f;
+            scopeGain[0][scopeIndex] = 0.0f;
+            scopePhase[0][scopeIndex] = 0.0f;
+            scopeGain[1][scopeIndex] = 0.0f;
+            scopePhase[1][scopeIndex] = 0.0f;
             //DBG("freq added: " << freq[scopeIndex]);
             scopeIndex++;
         }
-        if (freq[scopeIndex--] < maxFreq)
+        if (scopeFreq[scopeIndex--] < maxFreq)
         {
-            freq[scopeIndex] = maxFreq;
-            gain[0][scopeIndex] = 0.0f;
-            phase[0][scopeIndex] = 0.0f;
-            gain[1][scopeIndex] = 0.0f;
-            phase[1][scopeIndex] = 0.0f;
-            //DBG("freq added: " << freq[scopeIndex]);
+            scopeFreq[scopeIndex] = maxFreq;
+            scopeGain[0][scopeIndex] = 0.0f;
+            scopePhase[0][scopeIndex] = 0.0f;
+            scopeGain[1][scopeIndex] = 0.0f;
+            scopePhase[1][scopeIndex] = 0.0f;
         }
         scopeIndex = 0;
-        
-//        DBG("freq size: " << sizeof(freq)/sizeof(double));
-//        for (int i=0; i < scopeSize; i++)
-//        {
-//            DBG("" << freq[i]);
-//            DBG("" << gain[i]);
-//            DBG("" << phase[i]);
-//        }
     }
     
 //==============================================================================
@@ -216,9 +204,6 @@ private:
     float maxdB = 10.0f;
     Array<float> dBScale = {-6.0f, -3.0f, 0.0f, 3.0f, 6.0f};
 
-//    float maxPhase = MathConstants<float>::twoPi;
-//    float minPhase = -1.0f * maxPhase;
-//    Array<float> phaseScale = {-1.0f * MathConstants<float>::pi, 0.0f, MathConstants<float>::pi};
     float maxPhase = 500.0f;
     float minPhase = -maxPhase;
     Array<float> phaseScale = {minPhase/5, minPhase*2/5, minPhase*3/5, minPhase*4/5, 0.0f, maxPhase/5, maxPhase*2/5, maxPhase*3/5, maxPhase*4/5};
@@ -231,9 +216,12 @@ private:
     
 //==============================================================================
 public:
-    double freq [scopeSize];
-    double gain [2][scopeSize];
-    double phase [2][scopeSize];
+    double scopeFreq [scopeSize];
+    double scopeGain [2][scopeSize];
+    double scopePhase [2][scopeSize];
+    
+    float gains [2] = {0.0f, 0.0f};
+    float phases [2] = {0.0f, 0.0f};
     
     int scopeIndex = 0;
 

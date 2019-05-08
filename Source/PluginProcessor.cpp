@@ -39,13 +39,13 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     // method to stuff parameters into the treeState
     std::vector<std::unique_ptr<RangedAudioParameter>> params;
     
-    auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (200.0f, 320.0f), 270.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
+    auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (0.0f, 320.0f), 100.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
     auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (400.0f, 1000.0f), 700.0f, FREQ_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
     auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 1.0f), 0.5f, Q_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
     auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-6.0f, 0.0f), -4.0f, SEP_NAME,
         AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
-    auto dGainParams = std::make_unique<AudioParameterFloat> (DGAIN_ID, DGAIN_NAME, NormalisableRange<float> (-24.0f, 0.0f), 0.0f, DGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
-    auto xGainParams = std::make_unique<AudioParameterFloat> (XGAIN_ID, XGAIN_NAME, NormalisableRange<float> (-24.0f, 0.0f), 0.0f, XGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
+    auto dGainParams = std::make_unique<AudioParameterFloat> (DGAIN_ID, DGAIN_NAME, NormalisableRange<float> (-10.0f, 10.0f), 0.0f, DGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
+    auto xGainParams = std::make_unique<AudioParameterFloat> (XGAIN_ID, XGAIN_NAME, NormalisableRange<float> (-10.0f, 10.0f), 0.0f, XGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto activeParams = std::make_unique<AudioParameterBool> (ACTIVE_ID, ACTIVE_NAME, true);
     auto spectrumParams = std::make_unique<AudioParameterBool> (SPECTR_ID, SPECT_NAME, true);
     auto typeParams = std::make_unique<AudioParameterChoice> (TYPE_ID, TYPE_NAME, StringArray {"Shelf", "Pass", "None"}, 0);
@@ -205,10 +205,12 @@ bool GainSliderAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void GainSliderAudioProcessor::updateFilterParameters ()
 {
+    auto* delayValue = treeState.getRawParameterValue(DELAY_ID);
     auto* sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
     auto* sliderqValue = treeState.getRawParameterValue(Q_ID);
     auto* sliderSepValue = treeState.getRawParameterValue(SEP_ID);
-    
+    auto* xGainValue = treeState.getRawParameterValue(XGAIN_ID);
+    auto* dGainValue = treeState.getRawParameterValue(DGAIN_ID);
     auto* filterType = treeState.getRawParameterValue(TYPE_ID);
     
     if (*filterType == 0)
@@ -219,19 +221,24 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     }
     else if (*filterType == 1)
     {
-        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, 0.3f);
-        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, 0.3f);
+        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, *sliderqValue);
+        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, *sliderqValue);
     }
     else if (*filterType == 2)
     {
         // No filtering
     }
-    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.freq, filterGraphics.gain[0], filterGraphics.scopeSize, mSampleRate);
-    iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.freq, filterGraphics.phase[0], filterGraphics.scopeSize, mSampleRate);
-    iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.freq, filterGraphics.gain[1], filterGraphics.scopeSize, mSampleRate);
-    iirCoefficientsDirect.getPhaseForFrequencyArray(filterGraphics.freq, filterGraphics.phase[1], filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[0], filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[0], filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[1], filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsDirect.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[1], filterGraphics.scopeSize, mSampleRate);
     *iirLowPassFilterDuplicator.state = iirCoefficientsXfeed;
     *iirHighPassFilterDuplicator.state = iirCoefficientsDirect;
+    
+    filterGraphics.gains[0] = *xGainValue;
+    filterGraphics.gains[1] = *dGainValue;
+    
+    filterGraphics.phases[0] = *delayValue;
 
 }
 
@@ -254,6 +261,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     
     
     auto* activeState = treeState.getRawParameterValue(ACTIVE_ID);
+    updateFilterParameters();
     if (*activeState == true)
     {
         const int bufferLength = buffer.getNumSamples();
@@ -267,7 +275,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         }
 
         // Do the filtering on the filter buffer for the Crossfeed signal
-        updateFilterParameters();
+        //updateFilterParameters();
         dsp::AudioBlock<float> block (mFilterBuffer);
         iirLowPassFilterDuplicator.process(dsp::ProcessContextReplacing<float> (block));
 
@@ -292,7 +300,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         }
 
         // Do the filtering on the main buffer for the direct signal
-        updateFilterParameters();
+        //updateFilterParameters();
         dsp::AudioBlock<float> block2 (buffer);
         iirHighPassFilterDuplicator.process(dsp::ProcessContextReplacing<float> (block2));
 
