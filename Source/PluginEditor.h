@@ -108,6 +108,9 @@ private:
     
     // These must be declared before the components using them
     RotaryLookAndFeel rotaryLookAndFeel;
+    RotaryLookAndFeel rotaryLookAndFeel1;
+    RotaryLookAndFeel rotaryLookAndFeel2;
+    RotaryLookAndFeel rotaryLookAndFeel3;
     VerticalLookAndFeel verticalLookAndFeel;
     XfeedLookAndFeel xfeedLookAndFeel;
     DirectLookAndFeel directLookAndFeel;
@@ -135,8 +138,28 @@ private:
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
+    Rectangle<int> leftSpectrumPart;
     Rectangle<int> spectrumFrame1;
     Rectangle<int> spectrumFrame2;
+    
+    bool firstRun = true;
+    
+    // filter settings, first index is filter type, second is intensity
+    // See the filterTypeMenu and crossfeedMenu options
+    // [0][0] is shelf filter, Full settings and so on
+    float settings [3] [3] [6] = {  {
+                                        {0.0f , 400.0f , -5.0f, 0.57f, 5.0f, -5.0f},
+                                        {75.0f, 1000.0f, -1.0f, 0.66f, 2.0f, 2.0f},
+                                        {}
+                                    }, {
+                                        {94.0f, 700.0f , -4.0f, 0.45f, 4.0f, -4.0f},
+                                        {},
+                                        {}
+                                    }, {
+                                        {67.0f, 400.0f , -3.0f, 0.6f, 3.1f, -3.1f},
+                                        {},
+                                        {}
+                                    }};
     
 public:
     // Things public to be destroyed before private stuff.

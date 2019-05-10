@@ -218,11 +218,15 @@ void GainSliderAudioProcessor::updateFilterParameters ()
         //DBG("Frequency value: " << *sliderFreqValue);
         iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
         iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(*sliderSepValue));
+        filterGraphics.freqs[0] = *sliderFreqValue;
+        filterGraphics.freqs[1] = *sliderFreqValue;
     }
     else if (*filterType == 1)
     {
         iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, *sliderqValue);
         iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, *sliderqValue);
+        filterGraphics.freqs[0] = *sliderFreqValue * 2.0f;
+        filterGraphics.freqs[1] = *sliderFreqValue / 2.0f;
     }
     else if (*filterType == 2)
     {

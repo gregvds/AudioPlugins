@@ -11,6 +11,10 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+static Colour colour1 = Colour(0xFF726658);
+static Colour colour2 = Colour(0xFFf6f3ed);
+static Colour colour3 = Colour(0xFFa88854);
+
 
 //==============================================================================
 GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p)
@@ -33,6 +37,15 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     activeStateToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, ACTIVE_ID, activeStateToggleButton);
     spectrumToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, SPECTR_ID, spectrumAnalyserToggleButton);
     filterTypeMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, TYPE_ID, filterTypeMenu);
+
+    activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
+    activeStateToggleButton.setClickingTogglesState(true);
+    addAndMakeVisible(activeStateToggleButton);
+    
+    spectrumAnalyserToggleButton.setToggleState(true, NotificationType::dontSendNotification);
+    spectrumAnalyserToggleButton.setClickingTogglesState(true);
+    spectrumAnalyserToggleButton.addListener(this);
+    addAndMakeVisible(spectrumAnalyserToggleButton);
 
     crossFeedMenu.addItem("Full", 1);
     crossFeedMenu.addItem("Medium", 2);
@@ -139,19 +152,14 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedGainLabel.attachToComponent(&xfeedGainSlider, false);
     xfeedGainLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(xfeedGainLabel);
-
-    activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
-    activeStateToggleButton.setClickingTogglesState(true);
-    addAndMakeVisible(activeStateToggleButton);
     
-    spectrumAnalyserToggleButton.setToggleState(true, NotificationType::dontSendNotification);
-    spectrumAnalyserToggleButton.setClickingTogglesState(true);
-    spectrumAnalyserToggleButton.addListener(this);
-    addAndMakeVisible(spectrumAnalyserToggleButton);
+    rotaryLookAndFeel1.setColour(Slider::ColourIds::thumbColourId, colour1);
+    rotaryLookAndFeel2.setColour(Slider::ColourIds::thumbColourId, colour2);
+    rotaryLookAndFeel3.setColour(Slider::ColourIds::thumbColourId, colour3);
     
-    delaySlider.setLookAndFeel(&rotaryLookAndFeel);
-    frequencySlider.setLookAndFeel(&rotaryLookAndFeel);
-    qSlider.setLookAndFeel(&rotaryLookAndFeel);
+    delaySlider.setLookAndFeel(&rotaryLookAndFeel1);
+    frequencySlider.setLookAndFeel(&rotaryLookAndFeel2);
+    qSlider.setLookAndFeel(&rotaryLookAndFeel3);
     separationSlider.setLookAndFeel(&rotaryLookAndFeel);
     directGainSlider.setLookAndFeel(&directLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&xfeedLookAndFeel);
@@ -170,45 +178,67 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
-}
-
-void GainSliderAudioProcessorEditor::resized()
-{
+    
     Rectangle<int> bounds = getLocalBounds();
-    Rectangle<int> menu = bounds.removeFromTop(TEXTBOXHEIGT);
-    Rectangle<int> topPanel = bounds.removeFromTop(3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT)); //.reduced(3,3);
-    Rectangle<int> dials = topPanel.removeFromLeft(DIALSIZE);
-    Rectangle<int> slider1 = topPanel.removeFromLeft(DIALSIZE);
-    Rectangle<int> slider2 = topPanel.removeFromLeft(DIALSIZE);
-    Rectangle<int> slider3 = topPanel.removeFromLeft(DIALSIZE);
-    spectrumFrame1 = topPanel.removeFromLeft(SPECTRUMWIDTH);
-    spectrumFrame2 = bounds.removeFromTop(SPECTRUMHEIGHT);
+    Rectangle<int> topPanel = bounds.removeFromLeft(4*DIALSIZE);
+    if (spectrumAnalyserToggleButton.getToggleState() or firstRun)
+    {
+        leftSpectrumPart = topPanel.removeFromBottom(SPECTRUMHEIGHT); //.reduced(3,3);
+    }
+    
+    Rectangle<int> menu = topPanel.removeFromTop(TEXTBOXHEIGT);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     activeStateToggleButton.setBounds(menu.removeFromLeft(DIALSIZE));
     spectrumAnalyserToggleButton.setBounds(menu.removeFromLeft(DIALSIZE));
     
+    g.setColour (Colours::silver);
+    topPanel = topPanel.reduced(3,3);
+    g.drawRoundedRectangle (topPanel.toFloat(), 5, 2);
+    topPanel = topPanel.reduced(0,3);
+    
+    int sliderSize = topPanel.getWidth()/4;
+    
+    Rectangle<int> dials = topPanel.removeFromLeft(sliderSize);
+    Rectangle<int> slider1 = topPanel.removeFromLeft(sliderSize);
+    Rectangle<int> slider2 = topPanel.removeFromLeft(sliderSize);
+    Rectangle<int> slider3 = topPanel.removeFromLeft(sliderSize);
+    
+    int dialSize = dials.getHeight() - 3 * (LABELHEIGHT + TEXTBOXHEIGT);
+    
     delayLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    delaySlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
+    delaySlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
     frequencyLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    frequencySlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
+    frequencySlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
     qLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    qSlider.setBounds(dials.removeFromTop(DIALSIZE + TEXTBOXHEIGT));
+    qSlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
     
     separationLabel.setBounds(slider1.removeFromTop(LABELHEIGHT));
     separationSlider.setBounds(slider1);
-
     directGainLabel.setBounds(slider2.removeFromTop(LABELHEIGHT));
     directGainSlider.setBounds(slider2);
-    
     xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
     xfeedGainSlider.setBounds(slider3);
     
-    processor.filterGraphics.setBounds(spectrumFrame1);
-    processor.spectrumAnalyser.setBounds(spectrumFrame2);
+    if (spectrumAnalyserToggleButton.getToggleState() or firstRun)
+    {
+        spectrumFrame2 = bounds.removeFromBottom(SPECTRUMHEIGHT);
+        spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
+        spectrumFrame2.enlargeIfAdjacent(leftSpectrumPart);
+        
+        processor.filterGraphics.setBounds(spectrumFrame1);
+        processor.spectrumAnalyser.setBounds(spectrumFrame2);
+    }
+    firstRun = false;
 
 }
+
+void GainSliderAudioProcessorEditor::resized()
+{
+    
+}
+
 
 //==============================================================================
 // Unavoidable methods that must be instanciated, even if not used
@@ -229,27 +259,17 @@ void GainSliderAudioProcessorEditor::buttonClicked(Button *toggleButton)
 
 void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
 {
-    if (comboBox == &crossFeedMenu)
-    {
-        if (comboBox->getSelectedIdAsValue() == 1)
-        {
-            delaySlider.setValue(320.0f);
-            frequencySlider.setValue(600.0f);
-            separationSlider.setValue(-5.0f);
-        }
-        else if (comboBox->getSelectedIdAsValue() == 2)
-        {
-            delaySlider.setValue(270.0f);
-            frequencySlider.setValue(700.0f);
-            separationSlider.setValue(-4.0f);
-        }
-        else if (comboBox->getSelectedIdAsValue() == 3)
-        {
-            delaySlider.setValue(230.0f);
-            frequencySlider.setValue(800.0f);
-            separationSlider.setValue(-2.5f);
-        }
-    }
+    auto filterTypeIndex = filterTypeMenu.getSelectedId() - 1;
+    auto filterIntensityIndex = crossFeedMenu.getSelectedId() - 1;
+    
+    DBG("filtering choice: " << filterTypeIndex << " " << filterIntensityIndex);
+    
+    delaySlider.setValue(settings[filterIntensityIndex][filterTypeIndex][0]);
+    frequencySlider.setValue(settings[filterIntensityIndex][filterTypeIndex][1]);
+    separationSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][2]);
+    qSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][3]);
+    directGainSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][4]);
+    xfeedGainSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][5]);
 }
 
 void GainSliderAudioProcessorEditor::sliderValueChanged (Slider *slider)
