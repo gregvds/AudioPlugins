@@ -13,37 +13,96 @@ static Colour xfeedColour = Colour(0xFFe5d865);
 static Colour directColour = Colour(0xFFfbb040);
 static Colour freqColour = Colour(0xFFf6f3ed);
 
+static String microSec = CharPointer_UTF8 (" \xc2\xb5s");
+
+//==============================================================================
+/**
+ Classes to contain look and feel customizations for different types of sliders
+ */
+
+class LinearBarLookAndFeel : public LookAndFeel_V4,
+                             public Component
+{
+public:
+    LinearBarLookAndFeel()
+    {
+        LookAndFeel_V4::setColour(Slider::trackColourId, getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+        LookAndFeel_V4::setColour(Slider::textBoxTextColourId, Colours::silver);
+    }
+};
+
+//==============================================================================
+/**
+ */
+
 class FilterGraphics :  public Component,
                         public Timer,
-                        public TextEditor::Listener
+                        public Slider::Listener
 
 {
 public:
     FilterGraphics()
     {
+        tooltipWindow->setMillisecondsBeforeTipAppears (500);
+        
         startTimerHz (30);
         fillArrays(stepsPerDecuple);
         
-        minDBEditor.setInputRestrictions(7,"+-.0123456789");
-        maxDBEditor.setInputRestrictions(7,"+-.0123456789");
-        minPhaseEditor.setInputRestrictions(7,"+-.0123456789");
-        maxPhaseEditor.setInputRestrictions(7,"+-.0123456789");
-        
-        minDBEditor.setText(static_cast<String>(mindB));
+        // editable fields
+        minDBEditor.setRange (-20.0f, -0.01f);
+        minDBEditor.setValue(mindB);
+        minDBEditor.setNumDecimalPlacesToDisplay(1);
+        minDBEditor.setTextValueSuffix(" dB");
+        minDBEditor.setTooltip("Min dB displayed");
+        minDBEditor.setLookAndFeel(&linearBarLookAndFeel);
         minDBEditor.addListener(this);
         addAndMakeVisible(minDBEditor);
-        
-        maxDBEditor.setText(static_cast<String>(maxdB));
+
+        maxDBEditor.setRange (0.01f, 20.0f);
+        maxDBEditor.setValue(maxdB);
+        maxDBEditor.setNumDecimalPlacesToDisplay(1);
+        maxDBEditor.setTextValueSuffix(" dB");
+        maxDBEditor.setTooltip("Max dB displayed");
+        maxDBEditor.setLookAndFeel(&linearBarLookAndFeel);
         maxDBEditor.addListener(this);
         addAndMakeVisible(maxDBEditor);
-        
-        minPhaseEditor.setText(static_cast<String>(minPhase));
+
+        minPhaseEditor.setRange (-500.0f, -0.01f);
+        minPhaseEditor.setValue(minPhase);
+        minPhaseEditor.setNumDecimalPlacesToDisplay(0);
+        minPhaseEditor.setTextValueSuffix(microSec);
+        minPhaseEditor.setTooltip("Min phase displayed");
+        minPhaseEditor.setLookAndFeel(&linearBarLookAndFeel);
         minPhaseEditor.addListener(this);
         addAndMakeVisible(minPhaseEditor);
-        
-        maxPhaseEditor.setText(static_cast<String>(maxPhase));
+
+        maxPhaseEditor.setRange (0.01f, 500.0f);
+        maxPhaseEditor.setValue(maxPhase);
+        maxPhaseEditor.setNumDecimalPlacesToDisplay(0);
+        maxPhaseEditor.setTextValueSuffix(microSec);
+        maxPhaseEditor.setTooltip("Max phase displayed");
+        maxPhaseEditor.setLookAndFeel(&linearBarLookAndFeel);
         maxPhaseEditor.addListener(this);
         addAndMakeVisible(maxPhaseEditor);
+        
+        // Display fields
+        maxPhaseDisplay.setRange (-1000.0f, 1000.0f);
+        maxPhaseDisplay.setValue(0.0f);
+        maxPhaseDisplay.setNumDecimalPlacesToDisplay(0);
+        maxPhaseDisplay.setTextValueSuffix (microSec);
+        maxPhaseDisplay.setTooltip("Max phase");
+        maxPhaseDisplay.setLookAndFeel(&linearBarLookAndFeel);
+        maxPhaseDisplay.setTextBoxIsEditable(false);
+        addAndMakeVisible(maxPhaseDisplay);
+ 
+        minPhaseDisplay.setRange (-1000.0f, 1000.0f);
+        minPhaseDisplay.setValue(1000.0f);
+        minPhaseDisplay.setNumDecimalPlacesToDisplay(0);
+        minPhaseDisplay.setTextValueSuffix (microSec);
+        minPhaseDisplay.setTooltip("Min phase");
+        minPhaseDisplay.setLookAndFeel(&linearBarLookAndFeel);
+        minPhaseDisplay.setTextBoxIsEditable(false);
+        addAndMakeVisible(minPhaseDisplay);
 
     }
     ~FilterGraphics()
@@ -61,32 +120,8 @@ public:
 //==============================================================================
     void timerCallback() override
     {
+        updatePhasesRange();
         repaint();
-    }
-
-    
-    void textEditorFocusLost(TextEditor &textEditor) override
-    {
-        float changedValue = textEditor.getText().getFloatValue();
-        
-        DBG("Change into a text editor: " << changedValue);
-        String textEditorName = textEditor.getName();
-        if (textEditorName == "mindB")
-        {
-            mindB = changedValue;
-        }
-        else if (textEditorName == "maxdB")
-        {
-            maxdB = changedValue;
-        }
-        else if (textEditorName == "minPhase")
-        {
-            minPhase = changedValue;
-        }
-        else if (textEditorName == "maxPhase")
-        {
-            maxPhase = changedValue;
-        }
     }
 
 //==============================================================================
@@ -134,7 +169,6 @@ public:
         bounds = getLocalBounds();
         fieldBar = bounds.removeFromTop(TEXTBOXHEIGT);
         drawingArea = bounds.reduced (3, 0);
-        
         graph1 = drawingArea.removeFromTop(drawingArea.getHeight()/2).reduced(0,3);
         graph2 = drawingArea.removeFromTop(drawingArea.getHeight()).reduced(0,3);
         
@@ -142,8 +176,11 @@ public:
         maxDBEditor.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
         minPhaseEditor.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
         maxPhaseEditor.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        
+        maxPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
+        minPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
 
-        // Silver frame around RT spectrum analysis
+        // Silver frame
         g.setFont (12.0f);
         g.setColour (Colours::silver);
         g.drawRoundedRectangle (graph1.toFloat(), 5, 2);
@@ -165,8 +202,6 @@ public:
                               roundToInt (x2 + 3), graph2.getBottom() - 18, 50, 15, Justification::left, 1);
         }
         
-        
-        
         // Horizontal lines for dB reference
         for (int i=0; i < dBScaleTickNumber; i++)
         {
@@ -186,7 +221,7 @@ public:
         g.drawFittedText ("0.0 dB", graph1.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
         
         // Horizontal lines for phase reference
-        for (int i=0; i < phaseScale.size(); i++)
+        for (int i=0; i < phaseScaleTickNumber; i++)
         {
             g.setColour (Colours::silver.withAlpha (0.3f));
             auto y = getPositionForPhase(roundToInt (minPhase + (i * (maxPhase - minPhase) / phaseScaleTickNumber)), graph2.getY(), graph2.getBottom());
@@ -205,10 +240,33 @@ public:
 
         // draw the curves
         drawFrame(g);
-       
-//==============================================================================
     }
+
+//==============================================================================
+private:
     
+    void sliderValueChanged(Slider *slider) override
+    {
+        if (slider == &minDBEditor)
+        {
+            mindB = slider->getValue();
+        }
+        else if (slider == &maxDBEditor)
+        {
+            maxdB = slider->getValue();
+        }
+        else if (slider == &minPhaseEditor)
+        {
+            minPhase = slider->getValue();
+        }
+        else if (slider == &maxPhaseEditor)
+        {
+            maxPhase = slider->getValue();
+        }
+    }
+
+//==============================================================================
+
     float getTimeForPhase(float phase, float freq)
     {
         return (-phase / MathConstants<float>::twoPi) * (1000000.0f / freq);
@@ -228,7 +286,7 @@ public:
     {
         return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
     }
-
+    
     float getPositionForGain (float gain, float top, float bottom)
     {
         return jmap (Decibels::gainToDecibels (gain, mindB), mindB, maxdB, bottom, top);
@@ -238,7 +296,7 @@ public:
     {
         return Decibels::decibelsToGain (jmap (pos, bottom, top, mindB, maxdB), mindB);
     }
-
+    
     float getDBForPosition (float pos, float top, float bottom)
     {
         return jmap (pos, bottom, top, mindB, maxdB);
@@ -248,14 +306,35 @@ public:
     {
         return jmap (dB, mindB, maxdB, bottom, top);
     }
-
-
+    
 //==============================================================================
-private:
+
+    void updatePhasesRange()
+    {
+        // Reinitialisation of vars
+        maxPhaseDisplay.setValue(0.0f);
+        minPhaseDisplay.setValue(1000.0f);
+        float totalPhase = 0.0f;
+        
+        // for both filters, crossfeed being [0], direct being [1]
+        // for all phases data accross the frequency range
+        for (int i = 0; i < scopeSize; ++i)
+        {
+            totalPhase = (phases[0] + getTimeForPhase((float)scopePhase[0][i], (float)scopeFreq[i])) - (phases[1] + getTimeForPhase((float)scopePhase[1][i], (float)scopeFreq[i]));
+            if ( (double)totalPhase > maxPhaseDisplay.getValue())
+            {
+                maxPhaseDisplay.setValue(totalPhase);
+            }
+            if ( (double)totalPhase < minPhaseDisplay.getValue())
+            {
+                minPhaseDisplay.setValue(totalPhase);
+            }
+        }
+    }
+    
     void fillArrays(int stepsPerDecuple)
     {
         float computedFreq = minFreq;
-        //int i = 0;
         while (computedFreq <= maxFreq)
         {
             scopeFreq[scopeIndex] = computedFreq;
@@ -264,7 +343,6 @@ private:
             scopePhase[0][scopeIndex] = 0.0f;
             scopeGain[1][scopeIndex] = 0.0f;
             scopePhase[1][scopeIndex] = 0.0f;
-            //DBG("freq added: " << freq[scopeIndex]);
             scopeIndex++;
         }
         if (scopeFreq[scopeIndex--] < maxFreq)
@@ -280,32 +358,38 @@ private:
     
 //==============================================================================
 
+    SharedResourcePointer<TooltipWindow> tooltipWindow;
+
+    int scopeIndex = 0;
+    
     float minFreq = 20.0f;
     float maxFreq = 20000.0f;
     Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
 
     float mindB = -10.0f;
     float maxdB = 10.0f;
-    Array<float> dBScale = {-6.0f, -3.0f, 0.0f, 3.0f, 6.0f};
     int dBScaleTickNumber = 5;
     
     float minPhase = -500.0f;
     float maxPhase = 500.0f;
-    Array<float> phaseScale = {minPhase/5, minPhase*2/5, minPhase*3/5, minPhase*4/5, 0.0f, maxPhase/5, maxPhase*2/5, maxPhase*3/5, maxPhase*4/5};
     int phaseScaleTickNumber = 9;
 
-    
     Rectangle<int> bounds;
     Rectangle<int> fieldBar;
     Rectangle<int> drawingArea;
     Rectangle<int> graph1;
     Rectangle<int> graph2;
     
-    TextEditor minDBEditor {"mindB"};
-    TextEditor maxDBEditor {"maxdB"};
-    TextEditor minPhaseEditor {"minPhase"};
-    TextEditor maxPhaseEditor {"maxPhase"};
+    LinearBarLookAndFeel linearBarLookAndFeel;
     
+    Slider minDBEditor { Slider::LinearBar, Slider::TextBoxAbove };
+    Slider maxDBEditor { Slider::LinearBar, Slider::TextBoxAbove };
+    Slider minPhaseEditor { Slider::LinearBar, Slider::TextBoxAbove };
+    Slider maxPhaseEditor { Slider::LinearBar, Slider::TextBoxAbove };
+    
+    Slider maxPhaseDisplay { Slider::LinearBar, Slider::TextBoxAbove };
+    Slider minPhaseDisplay { Slider::LinearBar, Slider::TextBoxAbove };
+                                                                                                                 
     Array<Colour> colours = {xfeedColour, directColour, freqColour};
     
 //==============================================================================
@@ -319,7 +403,5 @@ public:
     float phases [2] = {0.0f, 0.0f};
     float freqs [2] = {0.0f, 0.0f};
     
-    int scopeIndex = 0;
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilterGraphics)
 };

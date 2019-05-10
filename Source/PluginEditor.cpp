@@ -67,9 +67,10 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     delaySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     delaySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
-    delaySlider.setTextValueSuffix(" microsec");
     delaySlider.setRange(0.0f, 320.0f);
     delaySlider.setValue(100.0f);
+    delaySlider.setNumDecimalPlacesToDisplay(0);
+    delaySlider.setTextValueSuffix(CharPointer_UTF8 (" \xc2\xb5s"));
     delaySlider.setSkewFactorFromMidPoint(50.0f);
     delaySlider.addListener(this);
     delaySlider.setTooltip(TRANS ("Delay time"));
@@ -186,7 +187,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
         leftSpectrumPart = topPanel.removeFromBottom(SPECTRUMHEIGHT); //.reduced(3,3);
     }
     
-    Rectangle<int> menu = topPanel.removeFromTop(TEXTBOXHEIGT);
+    Rectangle<int> menu = topPanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));

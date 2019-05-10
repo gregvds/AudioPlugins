@@ -144,9 +144,9 @@ private:
     
     bool firstRun = true;
     
-    // filter settings, first index is filter type, second is intensity
+    // filter settings, first index is intensity, second is type
     // See the filterTypeMenu and crossfeedMenu options
-    // [0][0] is shelf filter, Full settings and so on
+    // [0][0] is Full settings for shelf filter and so on
     float settings [3] [3] [6] = {  {
                                         {0.0f , 400.0f , -5.0f, 0.57f, 5.0f, -5.0f},
                                         {75.0f, 1000.0f, -1.0f, 0.66f, 2.0f, 2.0f},
