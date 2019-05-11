@@ -20,6 +20,7 @@ static Colour colour3 = Colour(0xFFa88854);
 GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p)
     : AudioProcessorEditor (&p), processor (p)
 {
+    setName("mainPluginEditorGUI");
     tooltipWindow->setMillisecondsBeforeTipAppears (500);
     
     // Make sure that before the constructor has finished, you've set the
@@ -65,6 +66,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     filterTypeMenu.setTooltip(TRANS ("Filter types"));
     addAndMakeVisible(filterTypeMenu);
     
+    delaySlider.setName("delaySlider");
     delaySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     delaySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     delaySlider.setRange(0.0f, 320.0f);
@@ -81,6 +83,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     delayLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(delayLabel);
     
+    frequencySlider.setName("frequencySlider");
     frequencySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     frequencySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     frequencySlider.setTextValueSuffix(" Hz");
@@ -96,6 +99,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencyLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(frequencyLabel);
     
+    qSlider.setName("qSlider");
     qSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     qSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     qSlider.setTextValueSuffix(" Q");
@@ -111,6 +115,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     qLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(qLabel);
 
+    separationSlider.setName("separationSlider");
     separationSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     separationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     separationSlider.setTextValueSuffix(" dB");
@@ -126,6 +131,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     separationLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(separationLabel);
     
+    directGainSlider.setName("directGainSlider");
     directGainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     directGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     directGainSlider.setTextValueSuffix(" dB");
@@ -140,6 +146,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(directGainLabel);
     
+    xfeedGainSlider.setName("xfeedGainSlider");
     xfeedGainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     xfeedGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     xfeedGainSlider.setTextValueSuffix(" dB");

@@ -114,7 +114,7 @@ public:
     {
         stepsPerDecuple = 50,
         scopeSize = (3 * stepsPerDecuple),
-        TEXTBOXHEIGT = 20,
+        TEXTBOXHEIGHT = 20,
         TEXTBOXWIDTH = 100
     };
 //==============================================================================
@@ -167,7 +167,7 @@ public:
     void paint(Graphics& g) override
     {
         bounds = getLocalBounds();
-        fieldBar = bounds.removeFromTop(TEXTBOXHEIGT);
+        fieldBar = bounds.removeFromTop(TEXTBOXHEIGHT);
         drawingArea = bounds.reduced (3, 0);
         graph1 = drawingArea.removeFromTop(drawingArea.getHeight()/2).reduced(0,3);
         graph2 = drawingArea.removeFromTop(drawingArea.getHeight()).reduced(0,3);
@@ -197,9 +197,9 @@ public:
             
             g.setColour (Colours::silver);
             g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
-                              roundToInt (x1 + 3), graph1.getBottom() - 18, 50, 15, Justification::left, 1);
+                              roundToInt (x1 + 3), graph1.getY() + 3, 50, 15, Justification::left, 1);
             g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
-                              roundToInt (x2 + 3), graph2.getBottom() - 18, 50, 15, Justification::left, 1);
+                              roundToInt (x2 + 3), graph2.getY() + 3, 50, 15, Justification::left, 1);
         }
         
         // Horizontal lines for dB reference
@@ -218,7 +218,7 @@ public:
         auto y = getPositionForDB(0.0f, graph1.getY(), graph1.getBottom());
         g.drawHorizontalLine (roundToInt (y), graph1.getX(), graph1.getRight());
         g.setColour (Colours::silver);
-        g.drawFittedText ("0.0 dB", graph1.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
+        g.drawFittedText ("0 dB", graph1.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
         
         // Horizontal lines for phase reference
         for (int i=0; i < phaseScaleTickNumber; i++)
@@ -245,6 +245,162 @@ public:
 //==============================================================================
 private:
     
+    void mouseDown (const MouseEvent& e) override
+    {
+        
+    }
+    
+    void mouseMove (const MouseEvent& e) override
+    {
+        if (!graph1.contains (e.x, e.y) and !graph2.contains (e.x, e.y))
+        {
+            return;
+        }
+        else
+        {
+            auto posX = graph1.getX() + getPositionForFrequency (float (freqs[0])) * graph1.getWidth();
+            // If we touch the frequency vertical line
+            if (std::abs (posX - e.position.getX()) < clickRadius)
+            {
+                draggingFreq = true;
+                draggingCurve = -1;
+                draggingGain = false;
+                draggingPhase = false;
+
+                setMouseCursor (MouseCursor (MouseCursor::LeftRightResizeCursor));
+                repaint (graph1);
+                repaint (graph2);
+                return;
+            }
+            else if (graph1.contains(e.x, e.y))
+            {
+                draggingCurve = isOnCurve(e, clickRadius);
+                if (isPositiveAndBelow(draggingCurve, 2))
+                {
+                    draggingFreq = false;
+                    draggingGain = true;
+                    draggingPhase = false;
+                    setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
+                    repaint (graph1);
+                    return;
+                }
+            }
+            else if (graph2.contains(e.x, e.y))
+            {
+                draggingCurve = isOnCurve(e, clickRadius);
+                if (isPositiveAndBelow(draggingCurve, 2))
+                {
+                    draggingFreq = false;
+                    draggingGain = false;
+                    draggingPhase = true;
+                    setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
+                    repaint (graph2);
+                    return;
+                }
+            }
+        }
+        draggingFreq = false;
+        draggingCurve = -1;
+        draggingGain = false;
+        draggingPhase = false;
+        setMouseCursor (MouseCursor (MouseCursor::NormalCursor));
+        repaint (graph1);
+        repaint (graph2);
+    }
+    
+    void mouseDrag (const MouseEvent& e) override
+    {
+        const Array<Component *> childrenOfGUI= this->getParentComponent()->getChildren();
+        if (draggingFreq)
+        {
+            auto pos = (e.position.getX() - graph1.getX()) / graph1.getWidth();
+            for (int i = 0; i < childrenOfGUI.size(); i++)
+            {
+                if (childrenOfGUI[i]->getName() == "frequencySlider")
+                {
+                    static_cast<Slider*>(childrenOfGUI[i])->setValue(getFrequencyForPosition(pos));
+                }
+            }
+        }
+        if (draggingGain)
+        {
+            auto posX = (e.position.getX() - graph1.getX()) / graph1.getWidth();
+            auto posY = e.position.getY();
+            // On the right or left of frequency line, updating gain sliders
+            for (int i = 0; i < childrenOfGUI.size(); i++)
+            {
+                if (draggingCurve == 0 and childrenOfGUI[i]->getName() == "xfeedGainSlider")
+                {
+                    static_cast<Slider*>(childrenOfGUI[i])->setValue(Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / getFilterGainForFrequency(getFrequencyForPosition(posX), draggingCurve)));
+                }
+                if (draggingCurve == 1 and childrenOfGUI[i]->getName() == "directGainSlider")
+                {
+                    static_cast<Slider*>(childrenOfGUI[i])->setValue(Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / getFilterGainForFrequency(getFrequencyForPosition(posX), draggingCurve)));
+                }
+            }
+        }
+        if (draggingPhase)
+        {
+            auto posX = (e.position.getX() - graph2.getX()) / graph2.getWidth();
+            auto posY = e.position.getY();
+            // On the right of frequency line, updating delay slider
+            if (posX > getPositionForFrequency(freqs[0]))
+            {
+                for (int i = 0; i < childrenOfGUI.size(); i++)
+                {
+                    if (draggingCurve == 0 and childrenOfGUI[i]->getName() == "delaySlider")
+                    {
+                        //DBG(getFrequencyForPosition(posX));
+                        //DBG(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()));
+                        //DBG(getTimeForPhase(getFilterPhaseForFrequency(getFrequencyForPosition(posX), 0), getFrequencyForPosition(posX)));
+                        static_cast<Slider*>(childrenOfGUI[i])->setValue(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()) - getTimeForPhase(getFilterPhaseForFrequency(getFrequencyForPosition(posX), 0), getFrequencyForPosition(posX)));
+                    }
+                }
+            }
+            // On the left of frequency line, updating separation sliders
+            else
+            {
+                for (int i = 0; i < childrenOfGUI.size(); i++)
+                {
+                    if (childrenOfGUI[i]->getName() == "separationSlider")
+                    {
+                        //static_cast<Slider*>(childrenOfGUI[i])->setValue();
+                    }
+                }
+
+            }
+
+        }
+    }
+    
+    void mouseDoubleClick (const MouseEvent& e) override
+    {
+        
+    }
+    
+    int isOnCurve(const MouseEvent& e, int clickRadius)
+    {
+        
+        float freqSearched = getFrequencyForPosition((e.position.getX() - graph1.getX()) / graph1.getWidth());
+        // Test to exclude out of range freqs
+        if (freqSearched < minFreq or maxFreq < freqSearched)
+        {
+            return -1;
+        }
+        for (int j = 0; j < 2; j++)
+        {
+            float positionSearched = e.position.getY();
+            float gainPosition = getPositionForGain(getFilterGainForFrequency(freqSearched, j) * Decibels::decibelsToGain(gains[j]), graph1.getY(), graph1.getBottom());
+            float phasePosition = getPositionForPhase(getFilterPhaseForFrequency(freqSearched, j) + phases [j], graph2.getY(), graph2.getBottom());
+            if((std::abs (gainPosition - positionSearched) < clickRadius) or
+               (std::abs (phasePosition - positionSearched) < clickRadius))
+                return j;
+        }
+        return -1;
+    }
+    
+//==============================================================================
+
     void sliderValueChanged(Slider *slider) override
     {
         if (slider == &minDBEditor)
@@ -276,6 +432,10 @@ private:
     {
         return jmap(phase, minPhase, maxPhase, bottom, top);
     }
+    float getPhaseForPosition(float pos, float top, float bottom)
+    {
+        return jmap(pos, bottom, top, minPhase, maxPhase);
+    }
     
     float getFrequencyForPosition (float pos)
     {
@@ -305,6 +465,32 @@ private:
     float getPositionForDB (float dB, float top, float bottom)
     {
         return jmap (dB, mindB, maxdB, bottom, top);
+    }
+    
+    float getFilterGainForFrequency(float freq, int filterIndex)
+    {
+        int scopeIndex = getScopeIndexForFrequency(freq);
+        return jmap(freq, (float)scopeFreq[scopeIndex], (float)scopeFreq[scopeIndex + 1], (float)scopeGain[filterIndex][scopeIndex], (float)scopeGain[filterIndex][scopeIndex + 1]);
+    }
+    
+    float getFilterPhaseForFrequency(float freq, int filterIndex)
+    {
+        int scopeIndex = getScopeIndexForFrequency(freq);
+        return jmap(freq, (float)scopeFreq[scopeIndex], (float)scopeFreq[scopeIndex + 1], getTimeForPhase((float)scopePhase[filterIndex][scopeIndex], (float)scopeFreq[scopeIndex]), getTimeForPhase((float)scopePhase[filterIndex][scopeIndex + 1], (float)scopeFreq[scopeIndex + 1]));
+    }
+    
+    float getScopeIndexForFrequency(float freq)
+    {
+        // return the scopeIndex of the frequency interval in which the frequency lies
+        for(int i = 1; i < scopeSize; i++)
+        {
+            if (scopeFreq[i-1] <= freq and freq <= scopeFreq[i])
+            {
+                // we found the interval for the frequency
+                return i-1;
+            }
+        }
+
     }
     
 //==============================================================================
@@ -359,6 +545,12 @@ private:
 //==============================================================================
 
     SharedResourcePointer<TooltipWindow> tooltipWindow;
+    
+    int clickRadius = 4;
+    bool draggingFreq = false;
+    int draggingCurve = -1;
+    bool draggingGain = false;
+    bool draggingPhase = false;
 
     int scopeIndex = 0;
     
@@ -368,11 +560,11 @@ private:
 
     float mindB = -10.0f;
     float maxdB = 10.0f;
-    int dBScaleTickNumber = 5;
+    int   dBScaleTickNumber = 5;
     
     float minPhase = -500.0f;
     float maxPhase = 500.0f;
-    int phaseScaleTickNumber = 9;
+    int   phaseScaleTickNumber = 9;
 
     Rectangle<int> bounds;
     Rectangle<int> fieldBar;

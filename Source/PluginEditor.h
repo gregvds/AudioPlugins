@@ -119,20 +119,6 @@ private:
     ComboBox crossFeedMenu;
     ComboBox filterTypeMenu;
     
-    Slider delaySlider;
-    Slider frequencySlider;
-    Slider qSlider;
-    Slider separationSlider;
-    Slider directGainSlider;
-    Slider xfeedGainSlider;
-    
-    Label delayLabel;
-    Label frequencyLabel;
-    Label qLabel;
-    Label separationLabel;
-    Label directGainLabel;
-    Label xfeedGainLabel;
-    
     ToggleButton activeStateToggleButton { "Active" };
     ToggleButton spectrumAnalyserToggleButton { "Spectrum" };
     
@@ -162,6 +148,21 @@ private:
                                     }};
     
 public:
+ 
+    Slider delaySlider;
+    Slider frequencySlider;
+    Slider qSlider;
+    Slider separationSlider;
+    Slider directGainSlider;
+    Slider xfeedGainSlider;
+    
+    Label delayLabel;
+    Label frequencyLabel;
+    Label qLabel;
+    Label separationLabel;
+    Label directGainLabel;
+    Label xfeedGainLabel;
+    
     // Things public to be destroyed before private stuff.
     // Destruction operates on a bottom to top of the code order.
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> delaySliderAttach;
