@@ -270,7 +270,7 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
     auto filterTypeIndex = filterTypeMenu.getSelectedId() - 1;
     auto filterIntensityIndex = crossFeedMenu.getSelectedId() - 1;
     
-    DBG("filtering choice: " << filterTypeIndex << " " << filterIntensityIndex);
+    //DBG("filtering choice: " << filterTypeIndex << " " << filterIntensityIndex);
     
     delaySlider.setValue(settings[filterIntensityIndex][filterTypeIndex][0]);
     frequencySlider.setValue(settings[filterIntensityIndex][filterTypeIndex][1]);

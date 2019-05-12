@@ -38,7 +38,8 @@ public:
 
 class FilterGraphics :  public Component,
                         public Timer,
-                        public Slider::Listener
+                        public Slider::Listener,
+                        public ComboBox::Listener
 
 {
 public:
@@ -87,6 +88,16 @@ public:
         maxPhaseEditor.addListener(this);
         addAndMakeVisible(maxPhaseEditor);
         
+        // Combobox for frequency scale choice
+        frequencyScaleTypeMenu.addItem("type 1", 1);
+        frequencyScaleTypeMenu.addItem("type 2", 2);
+        frequencyScaleTypeMenu.addItem("type 3", 3);
+        frequencyScaleTypeMenu.setSelectedId(1);
+        frequencyScaleTypeMenu.setJustificationType(Justification::centred);
+        frequencyScaleTypeMenu.addListener(this);
+        frequencyScaleTypeMenu.setTooltip(TRANS ("Frequency scale choice"));
+        addAndMakeVisible(frequencyScaleTypeMenu);
+        
         // Display fields
         maxPhaseDisplay.setRange (-1000.0f, 1000.0f);
         maxPhaseDisplay.setValue(0.0f);
@@ -129,7 +140,7 @@ public:
 //==============================================================================
     void drawFrame (Graphics& g)
     {
-        auto x       = graph1.getX();
+        //auto x       = graph1.getX();
         auto y1      = graph1.getY();
         auto width1  = graph1.getWidth();
         auto height1 = graph1.getHeight();
@@ -192,6 +203,8 @@ public:
         minPhaseEditor.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
         maxPhaseEditor.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
         
+        frequencyScaleTypeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        
         maxPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
         minPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
 
@@ -206,12 +219,12 @@ public:
         g.drawRoundedRectangle (graph2.toFloat(), 5, 2);
         
         // Vertical lines for frequency reference
-        for (int i=0; i < frequencies.size() ; ++i) {
+        for (int i=0; i < 10 ; ++i) {
             g.setColour (Colours::silver.withAlpha (0.3f));
-            auto freq = frequencies[i];
+            auto freq = frequencies[frequencyScaleTypeMenu.getSelectedId() - 1][i];
             auto x1 = graph1.getX() + graph1.getWidth() * getPositionForFrequency(freq);
-            g.drawVerticalLine (roundToInt (x1), graph1.getY(), graph1.getBottom());
             auto x2 = graph2.getX() + graph2.getWidth() * getPositionForFrequency(freq);
+            g.drawVerticalLine (roundToInt (x1), graph1.getY(), graph1.getBottom());
             g.drawVerticalLine (roundToInt (x2), graph2.getY(), graph2.getBottom());
             
             g.setColour (Colours::silver);
@@ -486,6 +499,13 @@ private:
         }
     }
 
+    void comboBoxChanged(ComboBox *comboBox) override
+    {
+        auto frequencyScaleTypeIndex = frequencyScaleTypeMenu.getSelectedId() - 1;
+        DBG("frequencyScaleTypeIndex: " << frequencyScaleTypeIndex);
+    }
+
+    
 //==============================================================================
 
     float getTimeForPhase(float phase, float freq)
@@ -620,7 +640,10 @@ private:
     
     float minFreq      = 20.0f;
     float maxFreq      = 20000.0f;
-    Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
+    //Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f, 22000.0f};
+    float frequencies [3] [10] = {{27.5f, 55.0f, 110.0f, 220.0f, 440.0f, 880.0f, 1760.0f, 3320.0f, 6640.0f, 13280.0f},
+                                  {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f, 22000.0f},
+                                  {40.0f, 80.0f, 160.0f, 320.0f, 640.0f, 1280.0f, 2560.0f, 5120.0f, 10240.0f, 20480.0f}};
 
     float mindB        = -10.0f;
     float maxdB        = 10.0f;
@@ -653,6 +676,8 @@ private:
     Slider maxDBEditor { Slider::LinearBar, Slider::TextBoxAbove };
     Slider minPhaseEditor { Slider::LinearBar, Slider::TextBoxAbove };
     Slider maxPhaseEditor { Slider::LinearBar, Slider::TextBoxAbove };
+    
+    ComboBox frequencyScaleTypeMenu;
     
     Slider maxPhaseDisplay { Slider::LinearBar, Slider::TextBoxAbove };
     Slider minPhaseDisplay { Slider::LinearBar, Slider::TextBoxAbove };
