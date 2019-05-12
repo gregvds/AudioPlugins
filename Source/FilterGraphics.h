@@ -12,6 +12,7 @@
 static Colour xfeedColour = Colour(0xFFe5d865);
 static Colour directColour = Colour(0xFFfbb040);
 static Colour freqColour = Colour(0xFFf6f3ed);
+static Colour bandwidthColour = Colour(0x40a88854);
 
 static String microSec = CharPointer_UTF8 (" \xc2\xb5s");
 
@@ -44,6 +45,7 @@ public:
     FilterGraphics()
     {
         tooltipWindow->setMillisecondsBeforeTipAppears (500);
+        //childrenOfGUI = this->getParentComponent()->getChildren();
         
         startTimerHz (30);
         fillArrays(stepsPerDecuple);
@@ -127,6 +129,7 @@ public:
 //==============================================================================
     void drawFrame (Graphics& g)
     {
+        auto x       = graph1.getX();
         auto y1      = graph1.getY();
         auto width1  = graph1.getWidth();
         auto height1 = graph1.getHeight();
@@ -134,20 +137,31 @@ public:
         auto width2  = graph2.getWidth();
         auto height2 = graph2.getHeight();
         
-        // We have two filters to represent, for crossfeed and for direct signals
+        // Draw bandwidth based on Q values and frequency of filter(s).
+        float q = getSlider("qSlider")->getValue();
+        float cF = getSlider("frequencySlider")->getValue();
+        float lF = cF - (2.0 - pow(2.0, 0.5)) * ((cF)/(2.0 * q));
+        float hF = cF + (pow(2.0, 0.5)) * ((cF)/(2.0 * q));
+        float lFPos = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, lF)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
+        float hFPos = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, hF)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
+        g.setColour (colours[3]);
+        g.fillRoundedRectangle(lFPos, y1, hFPos - lFPos, height1, 5);
+        g.fillRoundedRectangle(lFPos, y2, hFPos - lFPos, height2, 5);
+
+        // We have two filters to represent, for crossfeed and direct signals
         for (int j = 0; j < 2; j++)
         {
             for (int i = 1; i < scopeSize; ++i)
             {
                 g.setColour (colours[j]);
-                // Draw Amp vs freq of filter
+                // Draw Amp vs freq of filter in graph1
                 g.drawLine ({ (float)
                     jmap (getPositionForFrequency((float)scopeFreq[i - 1]), 0.0f, 1.0f, 3.0f, (float) width1 + 9.0f),
                     jmap (jlimit(mindB, maxdB, gains[j] + Decibels::gainToDecibels((float)scopeGain[j][i - 1])), mindB, maxdB, (float) y1 + height1, (float) y1),
                     (float)
                     jmap (getPositionForFrequency((float)scopeFreq[i]), 0.0f, 1.0f, 3.0f, (float) width1 + 9.0f),
                     jmap (jlimit(mindB, maxdB, gains[j] + Decibels::gainToDecibels((float)scopeGain[j][i])), mindB, maxdB, (float) y1 + height1, (float) y1) });
-                // Draw Phase vs freq of filter
+                // Draw Phase vs freq of filter in graph2
                 g.drawLine ({ (float)
                     jmap (getPositionForFrequency((float)scopeFreq[i - 1]), 0.0f, 1.0f, 3.0f, (float) width2 + 9.0f),
                     jmap (jlimit(minPhase, maxPhase, phases[j] + getTimeForPhase((float)scopePhase[j][i - 1], (float)scopeFreq[i - 1])), minPhase, maxPhase, (float) y2 + height2, (float) y2),
@@ -155,7 +169,8 @@ public:
                     jmap (getPositionForFrequency((float)scopeFreq[i]), 0.0f, 1.0f, 3.0f, (float) width2 + 9.0f),
                     jmap (jlimit(minPhase, maxPhase, phases[j] + getTimeForPhase((float)scopePhase[j][i], (float)scopeFreq[i])), minPhase, maxPhase, (float) y2 + height2, (float) y2) });
             }
-            // Draw filter frequency vertical line for each signal. Depending on the filtering type, it can be different
+            // Draw filter frequency vertical line for each signal.
+            // Depending on the filtering type, it can be different
             g.setColour (colours[2]);
             auto x1 = graph1.getX() + graph1.getWidth() * getPositionForFrequency(freqs[j]);
             g.drawVerticalLine (roundToInt (x1), graph1.getY(), graph1.getBottom());
@@ -179,6 +194,10 @@ public:
         
         maxPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
         minPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
+
+        
+        // draw the curves
+        drawFrame(g);
 
         // Silver frame
         g.setFont (12.0f);
@@ -237,9 +256,6 @@ public:
         g.drawHorizontalLine (roundToInt (y2), graph2.getX(), graph2.getRight());
         g.setColour (Colours::silver);
         g.drawFittedText (String (0.0f) + " µs", graph2.getX() + 3, roundToInt(y2 + 2), 50, 14, Justification::left, 1);
-
-        // draw the curves
-        drawFrame(g);
     }
 
 //==============================================================================
@@ -247,7 +263,7 @@ private:
     
     void mouseDown (const MouseEvent& e) override
     {
-        
+        DBG("Mouse down...");
     }
     
     void mouseMove (const MouseEvent& e) override
@@ -310,72 +326,64 @@ private:
     
     void mouseDrag (const MouseEvent& e) override
     {
-        const Array<Component *> childrenOfGUI= this->getParentComponent()->getChildren();
+        auto posX = (e.position.getX() - graph1.getX()) / graph1.getWidth();
+        auto posY = e.position.getY();
+        
+        Slider* frequencySlider = getSlider("frequencySlider");
+        Slider* xfeedGainSlider = getSlider("xfeedGainSlider");
+        Slider* directGainSlider = getSlider("directGainSlider");
+        Slider* separationSlider = getSlider("separationSlider");
+        Slider* delaySlider = getSlider("delaySlider");
+        Slider* qSlider = getSlider("qSlider");
+        
         if (draggingFreq)
         {
-            auto pos = (e.position.getX() - graph1.getX()) / graph1.getWidth();
-            for (int i = 0; i < childrenOfGUI.size(); i++)
+            if (frequencySlider != nullptr)
             {
-                if (childrenOfGUI[i]->getName() == "frequencySlider")
-                {
-                    static_cast<Slider*>(childrenOfGUI[i])->setValue(getFrequencyForPosition(pos));
-                }
+                frequencySlider->setValue(getFrequencyForPosition(posX));
             }
         }
         if (draggingGain)
         {
-            auto posX = (e.position.getX() - graph1.getX()) / graph1.getWidth();
-            auto posY = e.position.getY();
             // On the right or left of frequency line, updating gain sliders
-            for (int i = 0; i < childrenOfGUI.size(); i++)
+            if (posX > getPositionForFrequency(freqs[0]) and xfeedGainSlider != nullptr and draggingCurve == 0)
             {
-                if (draggingCurve == 0 and childrenOfGUI[i]->getName() == "xfeedGainSlider")
+                xfeedGainSlider->setValue(Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / getFilterGainForFrequency(getFrequencyForPosition(posX), draggingCurve)));
+            }
+            if (posX > getPositionForFrequency(freqs[0]) and directGainSlider != nullptr and draggingCurve == 1)
+            {
+                directGainSlider->setValue(Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / getFilterGainForFrequency(getFrequencyForPosition(posX), draggingCurve)));
+            }
+            if (posX < getPositionForFrequency(freqs[0]) and separationSlider != nullptr)
+            {
+                if (draggingCurve == 0)
                 {
-                    static_cast<Slider*>(childrenOfGUI[i])->setValue(Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / getFilterGainForFrequency(getFrequencyForPosition(posX), draggingCurve)));
+                    separationSlider->setValue( - Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / Decibels::decibelsToGain(xfeedGainSlider->getValue())));
                 }
-                if (draggingCurve == 1 and childrenOfGUI[i]->getName() == "directGainSlider")
+                else if (draggingCurve == 1)
                 {
-                    static_cast<Slider*>(childrenOfGUI[i])->setValue(Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / getFilterGainForFrequency(getFrequencyForPosition(posX), draggingCurve)));
+                    separationSlider->setValue(Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / Decibels::decibelsToGain(directGainSlider->getValue())));
                 }
             }
         }
         if (draggingPhase)
         {
-            auto posX = (e.position.getX() - graph2.getX()) / graph2.getWidth();
-            auto posY = e.position.getY();
             // On the right of frequency line, updating delay slider
-            if (posX > getPositionForFrequency(freqs[0]))
+            if (posX > getPositionForFrequency(freqs[0]) and draggingCurve == 0 and delaySlider != nullptr)
             {
-                for (int i = 0; i < childrenOfGUI.size(); i++)
-                {
-                    if (draggingCurve == 0 and childrenOfGUI[i]->getName() == "delaySlider")
-                    {
-                        //DBG(getFrequencyForPosition(posX));
-                        //DBG(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()));
-                        //DBG(getTimeForPhase(getFilterPhaseForFrequency(getFrequencyForPosition(posX), 0), getFrequencyForPosition(posX)));
-                        static_cast<Slider*>(childrenOfGUI[i])->setValue(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()) - getTimeForPhase(getFilterPhaseForFrequency(getFrequencyForPosition(posX), 0), getFrequencyForPosition(posX)));
-                    }
-                }
+                delaySlider->setValue(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()) - getTimeForPhase(getFilterPhaseForFrequency(getFrequencyForPosition(posX), 0), getFrequencyForPosition(posX)));
             }
-            // On the left of frequency line, updating separation sliders
-            else
+            // On the left of frequency line, updating Q slider
+            else if (posX < getPositionForFrequency(freqs[0]) and qSlider != nullptr)
             {
-                for (int i = 0; i < childrenOfGUI.size(); i++)
-                {
-                    if (childrenOfGUI[i]->getName() == "separationSlider")
-                    {
-                        //static_cast<Slider*>(childrenOfGUI[i])->setValue();
-                    }
-                }
-
+                DBG("Dragging for qSlider...");
             }
-
         }
     }
     
     void mouseDoubleClick (const MouseEvent& e) override
     {
-        
+        DBG("Mouse double clic...");
     }
     
     int isOnCurve(const MouseEvent& e, int clickRadius)
@@ -397,6 +405,23 @@ private:
                 return j;
         }
         return -1;
+    }
+    
+    Slider* getSlider(String name)
+    {
+        if (childrenOfGUI.size() == 0)
+        {
+            DBG("Refilling childrenOfGUI...");
+            childrenOfGUI = this->getParentComponent()->getChildren();
+        }
+        for (int i = 0; i < childrenOfGUI.size(); i++)
+        {
+            if (childrenOfGUI[i]->getName() == name)
+            {
+                return static_cast<Slider*>(childrenOfGUI[i]);
+            }
+        }
+        return nullptr;
     }
     
 //==============================================================================
@@ -490,11 +515,12 @@ private:
                 return i-1;
             }
         }
-
+        //return nanf(<#const char *#>);
     }
     
 //==============================================================================
 
+    
     void updatePhasesRange()
     {
         // Reinitialisation of vars
@@ -542,8 +568,12 @@ private:
         scopeIndex = 0;
     }
     
+
+    
 //==============================================================================
 
+    Array<Component *> childrenOfGUI; // = this->getParentComponent()->getChildren();
+    
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
     int clickRadius = 4;
@@ -582,7 +612,7 @@ private:
     Slider maxPhaseDisplay { Slider::LinearBar, Slider::TextBoxAbove };
     Slider minPhaseDisplay { Slider::LinearBar, Slider::TextBoxAbove };
                                                                                                                  
-    Array<Colour> colours = {xfeedColour, directColour, freqColour};
+    Array<Colour> colours = {xfeedColour, directColour, freqColour, bandwidthColour};
     
 //==============================================================================
 public:
