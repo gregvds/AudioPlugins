@@ -138,12 +138,12 @@ public:
         auto height2 = graph2.getHeight();
         
         // Draw bandwidth based on Q values and frequency of filter(s).
-        float q = getSlider("qSlider")->getValue();
-        float cF = getSlider("frequencySlider")->getValue();
-        float lF = cF - (2.0 - pow(2.0, 0.5)) * ((cF)/(2.0 * q));
-        float hF = cF + (pow(2.0, 0.5)) * ((cF)/(2.0 * q));
-        float lFPos = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, lF)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
-        float hFPos = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, hF)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
+        float q      = getSlider("qSlider")->getValue();
+        float cF     = getSlider("frequencySlider")->getValue();
+        lowFreqForQ  = cF - ((cF)/(2.0 * q)) * (1.0 - qGraphicalAdjustmentFactor);
+        highFreqForQ = cF + ((cF)/(2.0 * q)) * (1.0 + qGraphicalAdjustmentFactor);
+        float lFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, lowFreqForQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
+        float hFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, highFreqForQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
         g.setColour (colours[3]);
         g.fillRoundedRectangle(lFPos, y1, hFPos - lFPos, height1, 5);
         g.fillRoundedRectangle(lFPos, y2, hFPos - lFPos, height2, 5);
@@ -274,13 +274,16 @@ private:
         }
         else
         {
-            auto posX = graph1.getX() + getPositionForFrequency (float (freqs[0])) * graph1.getWidth();
+            auto posX            = graph1.getX() + getPositionForFrequency (float (freqs[0])) * graph1.getWidth();
+            auto posLowFreqForQ  = graph1.getX() + getPositionForFrequency (float (lowFreqForQ)) * graph1.getWidth();
+            auto posHighFreqForQ = graph1.getX() + getPositionForFrequency (float (highFreqForQ)) * graph1.getWidth();
             // If we touch the frequency vertical line
             if (std::abs (posX - e.position.getX()) < clickRadius)
             {
-                draggingFreq = true;
+                draggingFreq  = true;
+                draggingQ     = false;
                 draggingCurve = -1;
-                draggingGain = false;
+                draggingGain  = false;
                 draggingPhase = false;
 
                 setMouseCursor (MouseCursor (MouseCursor::LeftRightResizeCursor));
@@ -288,14 +291,31 @@ private:
                 repaint (graph2);
                 return;
             }
+            // If we touch the Q window limit
+            else if (std::abs (posLowFreqForQ - e.position.getX()) < clickRadius or std::abs (posHighFreqForQ - e.position.getX()) < clickRadius)
+            {
+                draggingFreq  = false;
+                draggingQ     = true;
+                draggingCurve = -1;
+                draggingGain  = false;
+                draggingPhase = false;
+                
+                setMouseCursor (MouseCursor (MouseCursor::LeftRightResizeCursor));
+                repaint (graph1);
+                repaint (graph2);
+                return;
+
+            }
             else if (graph1.contains(e.x, e.y))
             {
                 draggingCurve = isOnCurve(e, clickRadius);
                 if (isPositiveAndBelow(draggingCurve, 2))
                 {
-                    draggingFreq = false;
-                    draggingGain = true;
+                    draggingFreq  = false;
+                    draggingQ     = false;
+                    draggingGain  = true;
                     draggingPhase = false;
+                    
                     setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
                     repaint (graph1);
                     return;
@@ -304,20 +324,23 @@ private:
             else if (graph2.contains(e.x, e.y))
             {
                 draggingCurve = isOnCurve(e, clickRadius);
-                if (isPositiveAndBelow(draggingCurve, 2))
+                if (draggingCurve == 0)
                 {
-                    draggingFreq = false;
-                    draggingGain = false;
+                    draggingFreq  = false;
+                    draggingQ     = false;
+                    draggingGain  = false;
                     draggingPhase = true;
+                    
                     setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
                     repaint (graph2);
                     return;
                 }
             }
         }
-        draggingFreq = false;
+        draggingFreq  = false;
+        draggingQ     = false;
         draggingCurve = -1;
-        draggingGain = false;
+        draggingGain  = false;
         draggingPhase = false;
         setMouseCursor (MouseCursor (MouseCursor::NormalCursor));
         repaint (graph1);
@@ -329,18 +352,40 @@ private:
         auto posX = (e.position.getX() - graph1.getX()) / graph1.getWidth();
         auto posY = e.position.getY();
         
-        Slider* frequencySlider = getSlider("frequencySlider");
-        Slider* xfeedGainSlider = getSlider("xfeedGainSlider");
-        Slider* directGainSlider = getSlider("directGainSlider");
+        Slider* delaySlider      = getSlider("delaySlider");
+        Slider* qSlider          = getSlider("qSlider");
+        Slider* frequencySlider  = getSlider("frequencySlider");
         Slider* separationSlider = getSlider("separationSlider");
-        Slider* delaySlider = getSlider("delaySlider");
-        Slider* qSlider = getSlider("qSlider");
-        
+        Slider* directGainSlider = getSlider("directGainSlider");
+        Slider* xfeedGainSlider  = getSlider("xfeedGainSlider");
+
         if (draggingFreq)
         {
             if (frequencySlider != nullptr)
             {
                 frequencySlider->setValue(getFrequencyForPosition(posX));
+            }
+        }
+        if (draggingQ)
+        {
+            if (qSlider != nullptr)
+            {
+                auto posFreq     = getPositionForFrequency (float (freqs[0]));
+                
+                DBG("posX: " << posX);
+                DBG("posFreq: " << posFreq);
+                DBG("Q: " << 0.5*(freqs[0] / (freqs[0] - getFrequencyForPosition(posX))));
+                
+                // If adjusting Q from its low limit
+                if (posX < posFreq)
+                {
+                    qSlider->setValue((1.0 - qGraphicalAdjustmentFactor) * (0.5) * (freqs[0] / (freqs[0] - getFrequencyForPosition(posX))));
+                }
+                // if adjusting Q from its high limit
+                else if (posFreq < posX)
+                {
+                    qSlider->setValue((1.0 + qGraphicalAdjustmentFactor) * (0.5) * (freqs[0] / (getFrequencyForPosition(posX) - freqs[0])));
+                }
             }
         }
         if (draggingGain)
@@ -372,11 +417,6 @@ private:
             if (posX > getPositionForFrequency(freqs[0]) and draggingCurve == 0 and delaySlider != nullptr)
             {
                 delaySlider->setValue(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()) - getTimeForPhase(getFilterPhaseForFrequency(getFrequencyForPosition(posX), 0), getFrequencyForPosition(posX)));
-            }
-            // On the left of frequency line, updating Q slider
-            else if (posX < getPositionForFrequency(freqs[0]) and qSlider != nullptr)
-            {
-                DBG("Dragging for qSlider...");
             }
         }
     }
@@ -576,26 +616,31 @@ private:
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
-    int clickRadius = 4;
-    bool draggingFreq = false;
-    int draggingCurve = -1;
-    bool draggingGain = false;
-    bool draggingPhase = false;
-
-    int scopeIndex = 0;
+    int  scopeIndex = 0;
     
-    float minFreq = 20.0f;
-    float maxFreq = 20000.0f;
+    float minFreq      = 20.0f;
+    float maxFreq      = 20000.0f;
     Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f};
 
-    float mindB = -10.0f;
-    float maxdB = 10.0f;
+    float mindB        = -10.0f;
+    float maxdB        = 10.0f;
     int   dBScaleTickNumber = 5;
     
-    float minPhase = -500.0f;
-    float maxPhase = 500.0f;
+    float minPhase     = -500.0f;
+    float maxPhase     = 500.0f;
     int   phaseScaleTickNumber = 9;
+    
+    float lowFreqForQ  = 20.0f;
+    float highFreqForQ = 20000.0f;
+    float qGraphicalAdjustmentFactor = 0.4;
 
+    int  clickRadius   = 4;
+    bool draggingFreq  = false;
+    bool draggingQ     = false;
+    int  draggingCurve = -1;
+    bool draggingGain  = false;
+    bool draggingPhase = false;
+    
     Rectangle<int> bounds;
     Rectangle<int> fieldBar;
     Rectangle<int> drawingArea;
