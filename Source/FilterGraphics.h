@@ -219,19 +219,22 @@ public:
         g.drawRoundedRectangle (graph2.toFloat(), 5, 2);
         
         // Vertical lines for frequency reference
-        for (int i=0; i < 10 ; ++i) {
-            g.setColour (Colours::silver.withAlpha (0.3f));
+        for (int i=0; i < 26 ; ++i) {
             auto freq = frequencies[frequencyScaleTypeMenu.getSelectedId() - 1][i];
-            auto x1 = graph1.getX() + graph1.getWidth() * getPositionForFrequency(freq);
-            auto x2 = graph2.getX() + graph2.getWidth() * getPositionForFrequency(freq);
-            g.drawVerticalLine (roundToInt (x1), graph1.getY(), graph1.getBottom());
-            g.drawVerticalLine (roundToInt (x2), graph2.getY(), graph2.getBottom());
-            
-            g.setColour (Colours::silver);
-            g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
-                              roundToInt (x1 + 3), graph1.getY() + 3, 50, 15, Justification::left, 1);
-            g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
-                              roundToInt (x2 + 3), graph2.getY() + 3, 50, 15, Justification::left, 1);
+            if (minFreq < freq and freq < maxFreq)
+            {
+                g.setColour (Colours::silver.withAlpha (0.3f));
+                auto x1 = graph1.getX() + graph1.getWidth() * getPositionForFrequency(freq);
+                auto x2 = graph2.getX() + graph2.getWidth() * getPositionForFrequency(freq);
+                g.drawVerticalLine (roundToInt (x1), graph1.getY(), graph1.getBottom());
+                g.drawVerticalLine (roundToInt (x2), graph2.getY(), graph2.getBottom());
+                
+                g.setColour (Colours::silver);
+                g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
+                                  roundToInt (x1 + 3), graph1.getY() + 3, 50, 15, Justification::left, 1);
+                g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
+                                  roundToInt (x2 + 3), graph2.getY() + 3, 50, 15, Justification::left, 1);
+            }
         }
         
         // Horizontal lines for dB reference
@@ -640,10 +643,9 @@ private:
     
     float minFreq      = 20.0f;
     float maxFreq      = 20000.0f;
-    //Array<float> frequencies = {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f, 22000.0f};
-    float frequencies [3] [10] = {{27.5f, 55.0f, 110.0f, 220.0f, 440.0f, 880.0f, 1760.0f, 3320.0f, 6640.0f, 13280.0f},
-                                  {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f, 22000.0f},
-                                  {40.0f, 80.0f, 160.0f, 320.0f, 640.0f, 1280.0f, 2560.0f, 5120.0f, 10240.0f, 20480.0f}};
+    float frequencies [3] [26] = {{27.5f, 55.0f, 110.0f, 220.0f, 440.0f, 880.0f, 1760.0f, 3320.0f, 6640.0f, 13280.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f,                                   22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
+                                  {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
+                                  {30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f, 90.0f, 100.0f, 200.0f, 300.0f, 400.0f, 500.0f, 600.0f, 700.0f, 800.0f, 900.0f, 1000.0f, 2000.0f, 3000.0f, 4000.0f, 5000.0f, 6000.0f, 7000.0f, 8000.0f, 9000.0f, 10000.0f}};
 
     float mindB        = -10.0f;
     float maxdB        = 10.0f;

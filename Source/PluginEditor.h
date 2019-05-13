@@ -102,6 +102,11 @@ public:
     void buttonClicked(Button *toggleButton) override;
     
 private:
+    
+#ifdef JUCE_OPENGL
+    OpenGLContext           openGLContext;
+#endif
+    
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     GainSliderAudioProcessor& processor;
@@ -118,6 +123,7 @@ private:
     
     ComboBox crossFeedMenu;
     ComboBox filterTypeMenu;
+    ComboBox guiLayoutMenu;
     
     ToggleButton activeStateToggleButton { "Active" };
     ToggleButton spectrumAnalyserToggleButton { "Spectrum" };
@@ -129,6 +135,11 @@ private:
     Rectangle<int> spectrumFrame2;
     
     bool firstRun = true;
+    
+    int guiSizes [4] [2] = {{4* DIALSIZE,                 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT},
+                            {4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT},
+                            {4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT},
+                            {4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT}};
     
     // filter settings, first index is intensity, second is type
     // See the filterTypeMenu and crossfeedMenu options
