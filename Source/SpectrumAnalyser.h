@@ -38,7 +38,7 @@ public:
          on which it will operate corresponds to 2 to the power of the order.
          In this case, let's use an order of 11 which will produce an FFT with 2 ^ 11 = 2048 points.
     [2]: To calculate the corresponding FFT size, we use the left bit shift operator which produces 2048 as binary number 100000000000.
-    [3]: We also set the number of points in the visual representation of the spectrum as a scope size of 512.
+    [3]: We also set the number of points in the visual representation of the spectrum as a scope size of 1024.
 */
     enum
     {
@@ -140,25 +140,35 @@ public:
 */
     void drawFrame (Graphics& g)
     {
+        auto x      = drawingArea.getX();
+        auto y      = drawingArea.getY();
         auto width  = drawingArea.getWidth();
         auto height = drawingArea.getHeight();
-        auto y      = drawingArea.getY();
-        for (int i = 1; i < scopeSize; ++i)
+
+        g.setGradientFill(ColourGradient(outColour, x, y, Colours::transparentWhite, x, y + height, false));
+
+        Path p;
+        p.startNewSubPath(3.0f, y + height);
+        
+        //auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - i / (float) scopeSize) * 0.2f);
+        
+        for (int i = 0; i < scopeSize; i++)
         {
-            float x1 = (float) jmap ((float)i - 1.0f,  0.0f,   (float)(scopeSize - 1), 3.0f,           (float) width + 3.0f);
-            float y1 = jmap (jlimit(0.0f, 1.0f, scopeData[i - 1]), 0.0f,   1.0f,                   (float) y + height, y + 0.0f);
-            float x2 = (float) jmap ((float)i,         0.0f,   (float)(scopeSize - 1), 3.0f,           (float) width + 3.0f);
-            float y2 = jmap (jlimit(0.0f, 1.0f, scopeData[i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
-            
-            g.drawLine ({ x1, y1, x2, y2});
+            float x1 = (float) jmap ((float)i,         0.0f,   (float)(scopeSize - 1), 3.0f,           (float) width + 3.0f);
+            float y1 = jmap (jlimit(0.0f, 1.0f, scopeData[i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
+            p.lineTo(x1, y1);
         }
+        p.lineTo(width + 3.0f, y + height);
+        p.closeSubPath();
+        g.fillPath (p);
     }
 
     void paint(Graphics& g) override
     {
         drawingArea = getLocalBounds().reduced (3, 3);
         
-        
+        drawFrame(g);
+
         // Silver frame around RT spectrum analysis
         g.setFont (12.0f);
         g.setColour (Colours::silver);
@@ -176,9 +186,9 @@ public:
             auto y = drawingArea.getY();
             g.drawVerticalLine (roundToInt (x), drawingArea.getY(), drawingArea.getBottom());
             g.setColour (Colours::silver);
-            g.addTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, roundToInt (x + 28), y + 28));
-            g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz", roundToInt (x + 3), y + 3, 50, 15, Justification::left, 1);
-            g.addTransform(AffineTransform::rotation(MathConstants<float>::halfPi, roundToInt (x + 28), y + 28));
+            g.addTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, roundToInt (x + 25), y + 28));
+            g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz", roundToInt (x), y + 3, 50, 15, Justification::right, 1);
+            g.addTransform(AffineTransform::rotation(MathConstants<float>::halfPi, roundToInt (x + 25), y + 28));
         }
         // Horizontal lines for dB reference
         for (int i=0; i < 5; i++)
@@ -190,9 +200,7 @@ public:
             auto dB = getDBForPosition(y, drawingArea.getY(), drawingArea.getBottom());
             g.drawFittedText (String (dB) + " dB", drawingArea.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
         }
-        g.setColour (outColour);
         
-        drawFrame(g);
     }
 
     

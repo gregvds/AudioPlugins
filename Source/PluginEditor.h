@@ -144,7 +144,7 @@ private:
     // filter settings, first index is intensity, second is type
     // See the filterTypeMenu and crossfeedMenu options
     // [0][0] is Full settings for shelf filter and so on
-    float settings [3] [3] [6] = {  {
+    float settings [4] [3] [6] = {  {
                                         {0.0f , 400.0f , -5.0f, 0.57f, 5.0f, -5.0f},
                                         {75.0f, 1000.0f, -1.0f, 0.66f, 2.0f, 2.0f},
                                         {}
@@ -154,6 +154,10 @@ private:
                                         {}
                                     }, {
                                         {67.0f, 400.0f , -3.0f, 0.6f, 3.1f, -3.1f},
+                                        {},
+                                        {}
+                                    }, {
+                                        {270.0f, 700.0f , 0.0f, 1.0f, 1.0f, -3.0f},
                                         {},
                                         {}
                                     }};

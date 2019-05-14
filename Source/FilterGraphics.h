@@ -9,10 +9,12 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-static Colour xfeedColour = Colour(0xFFe5d865);
-static Colour directColour = Colour(0xFFfbb040);
-static Colour freqColour = Colour(0xFFf6f3ed);
-static Colour bandwidthColour = Colour(0x40a88854);
+static Colour delayColour      = Colour(0xFF726658);
+static Colour xfeedColour      = Colour(0xFFe5d865);
+static Colour directColour     = Colour(0xFFfbb040);
+static Colour separationColour = Colour(0xff6b8e23);
+static Colour freqColour       = Colour(0xFFf6f3ed);
+static Colour bandwidthColour  = Colour(0x40a88854);
 
 static String microSec = CharPointer_UTF8 (" \xc2\xb5s");
 
@@ -148,16 +150,33 @@ public:
         auto width2  = graph2.getWidth();
         auto height2 = graph2.getHeight();
         
-        // Draw bandwidth based on Q values and frequency of filter(s).
         float q      = getSlider("qSlider")->getValue();
         float cF     = getSlider("frequencySlider")->getValue();
         lowFreqForQ  = cF - ((cF)/(2.0 * q)) * (1.0 - qGraphicalAdjustmentFactor);
         highFreqForQ = cF + ((cF)/(2.0 * q)) * (1.0 + qGraphicalAdjustmentFactor);
         float lFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, lowFreqForQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
         float hFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, highFreqForQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
+        
+        float separationTransparency = - getSlider("separationSlider")->getValue()/(getSlider("separationSlider")->getMaximum() - getSlider("separationSlider")->getMinimum());
+        float delayTransparency = getSlider("delaySlider")->getValue()/(getSlider("delaySlider")->getMaximum() - getSlider("delaySlider")->getMinimum());
+        
+        // Draw Area on which separation is active
+        g.setGradientFill(ColourGradient(separationColour.withAlpha(separationTransparency), 0.0f, y1, Colours::transparentWhite, hFPos, y1, false));
+        g.fillRoundedRectangle(3.0f, y1, hFPos, height1, 5);
+        g.fillRoundedRectangle(3.0f, y2, hFPos, height2, 5);
+        
+        // Draw bandwidth based on Q values and frequency of filter(s).
         g.setColour (colours[3]);
         g.fillRoundedRectangle(lFPos, y1, hFPos - lFPos, height1, 5);
         g.fillRoundedRectangle(lFPos, y2, hFPos - lFPos, height2, 5);
+        
+        // Draw xfeed Delay horizontal line
+        float delayPosition = getPositionForTime(getSlider("delaySlider")->getValue(), y2, graph2.getBottom());
+        Line<float> delayLine = Line<float>(3.0f, delayPosition, (float) width1, delayPosition);
+        float dashes [2] = {5,5};
+        g.setColour (delayColour.withAlpha(delayTransparency));
+        g.drawDashedLine(delayLine, dashes, 2);
+        g.drawHorizontalLine (roundToInt (y2), graph2.getX(), graph2.getRight());
 
         // We have two filters to represent, for crossfeed and direct signals
         for (int j = 0; j < 2; j++)
@@ -226,14 +245,20 @@ public:
                 g.setColour (Colours::silver.withAlpha (0.3f));
                 auto x1 = graph1.getX() + graph1.getWidth() * getPositionForFrequency(freq);
                 auto x2 = graph2.getX() + graph2.getWidth() * getPositionForFrequency(freq);
+                auto y1 = graph1.getY();
+                auto y2 = graph2.getY();
                 g.drawVerticalLine (roundToInt (x1), graph1.getY(), graph1.getBottom());
                 g.drawVerticalLine (roundToInt (x2), graph2.getY(), graph2.getBottom());
                 
                 g.setColour (Colours::silver);
+                g.addTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, roundToInt (x1 + 25), y1 + 28));
                 g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
-                                  roundToInt (x1 + 3), graph1.getY() + 3, 50, 15, Justification::left, 1);
+                                  roundToInt (x1), graph1.getY() + 3, 50, 15, Justification::right, 1);
+                g.addTransform(AffineTransform::rotation(MathConstants<float>::halfPi, roundToInt (x1 + 25), y1 + 28));
+                g.addTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, roundToInt (x2 + 25), y2 + 28));
                 g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
-                                  roundToInt (x2 + 3), graph2.getY() + 3, 50, 15, Justification::left, 1);
+                                  roundToInt (x2), graph2.getY() + 3, 50, 15, Justification::right, 1);
+                g.addTransform(AffineTransform::rotation(MathConstants<float>::halfPi, roundToInt (x2 + 25), y2 + 28));
             }
         }
         
@@ -520,6 +545,12 @@ private:
     {
         return jmap(phase, minPhase, maxPhase, bottom, top);
     }
+    
+    float getPositionForTime(float time, float top, float bottom)
+    {
+        return jmap(time, minPhase, maxPhase, bottom, top);
+    }
+    
     float getPhaseForPosition(float pos, float top, float bottom)
     {
         return jmap(pos, bottom, top, minPhase, maxPhase);

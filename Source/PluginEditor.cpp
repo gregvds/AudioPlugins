@@ -65,6 +65,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     crossFeedMenu.addItem("Full", 1);
     crossFeedMenu.addItem("Medium", 2);
     crossFeedMenu.addItem("Light", 3);
+    crossFeedMenu.addItem("Pure Haas", 4);
     crossFeedMenu.setSelectedId(2);
     crossFeedMenu.setJustificationType(Justification::centred);
     crossFeedMenu.addListener(this);
