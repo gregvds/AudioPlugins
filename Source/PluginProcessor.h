@@ -30,6 +30,8 @@
 #define ACTIVE_NAME "Active"
 #define SPECTR_ID "spectrum"
 #define SPECT_NAME "Spectrum"
+#define SETTINGS_ID "settings"
+#define SETTINGS_NAME "Settings"
 #define TYPE_ID "type"
 #define TYPE_NAME "Type"
 

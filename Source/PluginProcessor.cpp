@@ -47,7 +47,8 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     auto dGainParams = std::make_unique<AudioParameterFloat> (DGAIN_ID, DGAIN_NAME, NormalisableRange<float> (-10.0f, 10.0f), 0.0f, DGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto xGainParams = std::make_unique<AudioParameterFloat> (XGAIN_ID, XGAIN_NAME, NormalisableRange<float> (-10.0f, 10.0f), 0.0f, XGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto activeParams = std::make_unique<AudioParameterBool> (ACTIVE_ID, ACTIVE_NAME, true);
-    auto spectrumParams = std::make_unique<AudioParameterBool> (SPECTR_ID, SPECT_NAME, true);
+    auto guiParams = std::make_unique<AudioParameterChoice> (SPECTR_ID, SPECT_NAME, StringArray {"Plugin only", "+ Diagrams", "+ Spectrum", "Full plugin"}, 1);
+    auto settingsParams = std::make_unique<AudioParameterChoice> (SETTINGS_ID, SETTINGS_NAME, StringArray {"Full", "Medium", "Light", "Pure Haas"}, 1);
     auto typeParams = std::make_unique<AudioParameterChoice> (TYPE_ID, TYPE_NAME, StringArray {"Shelf", "Pass", "None"}, 0);
     
     params.push_back(std::move(delayParams));
@@ -57,7 +58,8 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     params.push_back(std::move(dGainParams));
     params.push_back(std::move(xGainParams));
     params.push_back(std::move(activeParams));
-    params.push_back(std::move(spectrumParams));
+    params.push_back(std::move(guiParams));
+    params.push_back(std::move(settingsParams));
     params.push_back(std::move(typeParams));
     
     
@@ -211,6 +213,7 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     auto* sliderSepValue = treeState.getRawParameterValue(SEP_ID);
     auto* xGainValue = treeState.getRawParameterValue(XGAIN_ID);
     auto* dGainValue = treeState.getRawParameterValue(DGAIN_ID);
+    
     auto* filterType = treeState.getRawParameterValue(TYPE_ID);
     
     if (*filterType == 0)
@@ -231,6 +234,7 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     {
         // No filtering
     }
+    
     iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[0], filterGraphics.scopeSize, mSampleRate);
     iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[0], filterGraphics.scopeSize, mSampleRate);
     iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[1], filterGraphics.scopeSize, mSampleRate);
@@ -331,7 +335,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
     auto* spectrumState = treeState.getRawParameterValue(SPECTR_ID);
-    if (*spectrumState == true)
+    if (*spectrumState == 2 or *spectrumState == 3)
     {
         spectrumAnalyser.getNextAudioBlock(buffer);
     }
@@ -393,23 +397,19 @@ void GainSliderAudioProcessor::getStateInformation (MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
-    /*
-    MemoryOutputStream stream(destData, false);
-    treeState.state.writeToStream (stream);
-    */
+//    MemoryOutputStream stream(destData, false);
+//    treeState.state.writeToStream (stream);
 }
 
 void GainSliderAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
-    /*
-    ValueTree tree = ValueTree::readFromData (data, size_t (sizeInBytes));
-    if (tree.isValid())
-    {
-        treeState.state = tree;
-    }
-    */
+//    ValueTree tree = ValueTree::readFromData (data, size_t (sizeInBytes));
+//    if (tree.isValid())
+//    {
+//        treeState.state = tree;
+//    }
 }
 
 //==============================================================================

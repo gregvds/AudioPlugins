@@ -122,7 +122,7 @@ public:
     }
     ~FilterGraphics()
     {
-        
+        childrenOfGUI = {};
     }
     
     enum
@@ -365,7 +365,7 @@ private:
             else if (graph2.contains(e.x, e.y))
             {
                 draggingCurve = isOnCurve(e, clickRadius);
-                if (draggingCurve == 0)
+                if (draggingCurve == 2)
                 {
                     draggingFreq  = false;
                     draggingQ     = false;
@@ -455,9 +455,9 @@ private:
         if (draggingPhase)
         {
             // On the right of frequency line, updating delay slider
-            if (posX > getPositionForFrequency(freqs[0]) and draggingCurve == 0 and delaySlider != nullptr)
+            if (draggingCurve == 2 and delaySlider != nullptr)
             {
-                delaySlider->setValue(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()) - getTimeForPhase(getFilterPhaseForFrequency(getFrequencyForPosition(posX), 0), getFrequencyForPosition(posX)));
+                delaySlider->setValue(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()));
             }
         }
     }
@@ -469,6 +469,13 @@ private:
     
     int isOnCurve(const MouseEvent& e, int clickRadius)
     {
+        float delaySearched = getPhaseForPosition(e.position.getY(), graph2.getY(), graph2.getBottom());
+        DBG("delaySearchd: " << delaySearched);
+        DBG("delaySlider value: " << getSlider("delaySlider")->getValue());
+        if (std::abs(delaySearched - getSlider("delaySlider")->getValue()) < clickRadius)
+        {
+            return 2;
+        }
         
         float freqSearched = getFrequencyForPosition((e.position.getX() - graph1.getX()) / graph1.getWidth());
         // Test to exclude out of range freqs
@@ -502,7 +509,10 @@ private:
                 return static_cast<Slider*>(childrenOfGUI[i]);
             }
         }
+//        childrenOfGUI.clear();
+//        return getSlider(name);
         return nullptr;
+        
     }
     
 //==============================================================================
@@ -666,7 +676,7 @@ private:
     
 //==============================================================================
 
-    Array<Component *> childrenOfGUI; // = this->getParentComponent()->getChildren();
+    Array<Component *> childrenOfGUI;
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     

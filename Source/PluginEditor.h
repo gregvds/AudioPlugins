@@ -126,7 +126,7 @@ private:
     ComboBox guiLayoutMenu;
     
     ToggleButton activeStateToggleButton { "Active" };
-    ToggleButton spectrumAnalyserToggleButton { "Spectrum" };
+    //ToggleButton spectrumAnalyserToggleButton { "Spectrum" };
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
@@ -187,7 +187,8 @@ public:
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> directGainSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> xfeedGainSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::ButtonAttachment> activeStateToggleButtonAttach;
-    std::unique_ptr <AudioProcessorValueTreeState::ButtonAttachment> spectrumToggleButtonAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::ComboBoxAttachment> guiLayoutMenuAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::ComboBoxAttachment> settingsMenuAttach;
     std::unique_ptr <AudioProcessorValueTreeState::ComboBoxAttachment > filterTypeMenuAttach;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainSliderAudioProcessorEditor)

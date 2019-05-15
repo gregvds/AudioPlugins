@@ -40,7 +40,8 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DGAIN_ID, directGainSlider);
     xfeedGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, XGAIN_ID, xfeedGainSlider);
     activeStateToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, ACTIVE_ID, activeStateToggleButton);
-    spectrumToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, SPECTR_ID, spectrumAnalyserToggleButton);
+    guiLayoutMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, SPECTR_ID, guiLayoutMenu);
+    settingsMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, SETTINGS_ID, crossFeedMenu);
     filterTypeMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, TYPE_ID, filterTypeMenu);
 
     activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
