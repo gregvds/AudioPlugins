@@ -178,6 +178,8 @@ public:
     Label directGainLabel;
     Label xfeedGainLabel;
     
+    FilterGraphics filterGraphics;
+    
     // Things public to be destroyed before private stuff.
     // Destruction operates on a bottom to top of the code order.
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> delaySliderAttach;

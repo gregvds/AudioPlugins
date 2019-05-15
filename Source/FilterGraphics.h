@@ -470,8 +470,6 @@ private:
     int isOnCurve(const MouseEvent& e, int clickRadius)
     {
         float delaySearched = getPhaseForPosition(e.position.getY(), graph2.getY(), graph2.getBottom());
-        DBG("delaySearchd: " << delaySearched);
-        DBG("delaySlider value: " << getSlider("delaySlider")->getValue());
         if (std::abs(delaySearched - getSlider("delaySlider")->getValue()) < clickRadius)
         {
             return 2;
@@ -509,8 +507,6 @@ private:
                 return static_cast<Slider*>(childrenOfGUI[i]);
             }
         }
-//        childrenOfGUI.clear();
-//        return getSlider(name);
         return nullptr;
         
     }
@@ -540,7 +536,6 @@ private:
     void comboBoxChanged(ComboBox *comboBox) override
     {
         auto frequencyScaleTypeIndex = frequencyScaleTypeMenu.getSelectedId() - 1;
-        DBG("frequencyScaleTypeIndex: " << frequencyScaleTypeIndex);
     }
 
     

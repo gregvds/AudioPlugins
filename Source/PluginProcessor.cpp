@@ -207,46 +207,28 @@ bool GainSliderAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void GainSliderAudioProcessor::updateFilterParameters ()
 {
-    auto* delayValue = treeState.getRawParameterValue(DELAY_ID);
     auto* sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
     auto* sliderqValue = treeState.getRawParameterValue(Q_ID);
     auto* sliderSepValue = treeState.getRawParameterValue(SEP_ID);
-    auto* xGainValue = treeState.getRawParameterValue(XGAIN_ID);
-    auto* dGainValue = treeState.getRawParameterValue(DGAIN_ID);
-    
     auto* filterType = treeState.getRawParameterValue(TYPE_ID);
     
     if (*filterType == 0)
     {
         iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
         iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(*sliderSepValue));
-        filterGraphics.freqs[0] = *sliderFreqValue;
-        filterGraphics.freqs[1] = *sliderFreqValue;
     }
     else if (*filterType == 1)
     {
         iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, *sliderqValue);
         iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, *sliderqValue);
-        filterGraphics.freqs[0] = *sliderFreqValue * 2.0f;
-        filterGraphics.freqs[1] = *sliderFreqValue / 2.0f;
     }
     else if (*filterType == 2)
     {
         // No filtering
     }
     
-    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[0], filterGraphics.scopeSize, mSampleRate);
-    iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[0], filterGraphics.scopeSize, mSampleRate);
-    iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[1], filterGraphics.scopeSize, mSampleRate);
-    iirCoefficientsDirect.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[1], filterGraphics.scopeSize, mSampleRate);
     *iirLowPassFilterDuplicator.state = iirCoefficientsXfeed;
     *iirHighPassFilterDuplicator.state = iirCoefficientsDirect;
-    
-    filterGraphics.gains[0] = *xGainValue;
-    filterGraphics.gains[1] = *dGainValue;
-    
-    filterGraphics.phases[0] = *delayValue;
-
 }
 
 void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
@@ -265,7 +247,6 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     {
         buffer.clear (i, 0, buffer.getNumSamples());
     }
-    
     
     auto* activeState = treeState.getRawParameterValue(ACTIVE_ID);
     updateFilterParameters();
