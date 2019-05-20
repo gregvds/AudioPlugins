@@ -47,8 +47,6 @@ public:
     GainSliderAudioProcessor();
     ~GainSliderAudioProcessor();
 
-    SpectrumAnalyser spectrumAnalyser;
-
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -97,8 +95,12 @@ public:
     
     double mSampleRate { 44100 };
 
-    
+    // Audio output buffer for Spectrum analyser
+    AudioBuffer<float> mOutputBuffer;
+    int mOutputBufferSize { 0 };
+
 private:
+    
     // Audio buffer for filtering the crossfeed signal only
     AudioBuffer<float> mFilterBuffer;
     int mFilterBufferSize { 0 };

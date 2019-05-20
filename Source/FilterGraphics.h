@@ -39,7 +39,6 @@ public:
  */
 
 class FilterGraphics :  public Component,
-                        public Timer,
                         public Slider::Listener,
                         public ComboBox::Listener
 
@@ -50,7 +49,6 @@ public:
         tooltipWindow->setMillisecondsBeforeTipAppears (500);
         //childrenOfGUI = this->getParentComponent()->getChildren();
         
-        startTimerHz (30);
         fillArrays(stepsPerDecuple);
         
         // editable fields
@@ -132,12 +130,6 @@ public:
         TEXTBOXHEIGHT = 20,
         TEXTBOXWIDTH = 100
     };
-//==============================================================================
-    void timerCallback() override
-    {
-        updatePhasesRange();
-        repaint();
-    }
 
 //==============================================================================
     void drawFrame (Graphics& g)
@@ -298,6 +290,30 @@ public:
         g.setColour (Colours::silver);
         g.drawFittedText (String (0.0f) + " µs", graph2.getX() + 3, roundToInt(y2 + 2), 50, 14, Justification::left, 1);
     }
+    
+    void updatePhasesRange()
+    {
+        // Reinitialisation of vars
+        maxPhaseDisplay.setValue(0.0f);
+        minPhaseDisplay.setValue(1000.0f);
+        float totalPhase = 0.0f;
+        
+        // for both filters, crossfeed being [0], direct being [1]
+        // for all phases data accross the frequency range
+        for (int i = 0; i < scopeSize; ++i)
+        {
+            totalPhase = (phases[0] + getTimeForPhase((float)scopePhase[0][i], (float)scopeFreq[i])) - (phases[1] + getTimeForPhase((float)scopePhase[1][i], (float)scopeFreq[i]));
+            if ( (double)totalPhase > maxPhaseDisplay.getValue())
+            {
+                maxPhaseDisplay.setValue(totalPhase);
+            }
+            if ( (double)totalPhase < minPhaseDisplay.getValue())
+            {
+                minPhaseDisplay.setValue(totalPhase);
+            }
+        }
+    }
+
 
 //==============================================================================
 private:
@@ -619,30 +635,6 @@ private:
     
 //==============================================================================
 
-    
-    void updatePhasesRange()
-    {
-        // Reinitialisation of vars
-        maxPhaseDisplay.setValue(0.0f);
-        minPhaseDisplay.setValue(1000.0f);
-        float totalPhase = 0.0f;
-        
-        // for both filters, crossfeed being [0], direct being [1]
-        // for all phases data accross the frequency range
-        for (int i = 0; i < scopeSize; ++i)
-        {
-            totalPhase = (phases[0] + getTimeForPhase((float)scopePhase[0][i], (float)scopeFreq[i])) - (phases[1] + getTimeForPhase((float)scopePhase[1][i], (float)scopeFreq[i]));
-            if ( (double)totalPhase > maxPhaseDisplay.getValue())
-            {
-                maxPhaseDisplay.setValue(totalPhase);
-            }
-            if ( (double)totalPhase < minPhaseDisplay.getValue())
-            {
-                minPhaseDisplay.setValue(totalPhase);
-            }
-        }
-    }
-    
     void fillArrays(int stepsPerDecuple)
     {
         float computedFreq = minFreq;
@@ -725,6 +717,7 @@ private:
 //==============================================================================
 public:
 
+    
     double scopeFreq [scopeSize];
     double scopeGain [2][scopeSize];
     double scopePhase [2][scopeSize];

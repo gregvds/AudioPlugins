@@ -136,6 +136,11 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     // initialisation that you need..
     const int numInputChannels = getTotalNumInputChannels();
     
+    // Initialisation of the output buffer.
+    // It has the same size as the buffer itself.
+    mOutputBuffer.setSize(numInputChannels, samplesPerBlock, false, true, true);
+    mOutputBuffer.clear();
+
     // Initialisation of the filter buffer.
     // It has the same size as the buffer itself.
     mFilterBuffer.setSize(numInputChannels, samplesPerBlock, false, true, true);
@@ -318,7 +323,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     auto* spectrumState = treeState.getRawParameterValue(SPECTR_ID);
     if (*spectrumState == 2 or *spectrumState == 3)
     {
-        spectrumAnalyser.getNextAudioBlock(buffer);
+        mOutputBuffer.makeCopyOf(buffer);
     }
 }
 

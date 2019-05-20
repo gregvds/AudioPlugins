@@ -86,6 +86,7 @@ public:
  */
 
 class GainSliderAudioProcessorEditor  : public AudioProcessorEditor,
+                                        public Timer,
                                         public Slider::Listener,
                                         public ComboBox::Listener,
                                         public Button::Listener
@@ -96,7 +97,9 @@ public:
 
     //==============================================================================
     void paint (Graphics&) override;
+    //void repaint ();
     void resized() override;
+    void timerCallback() override;
     void sliderValueChanged(Slider *slider) override;
     void comboBoxChanged(ComboBox *comboBox) override;
     void buttonClicked(Button *toggleButton) override;
@@ -179,6 +182,7 @@ public:
     Label xfeedGainLabel;
     
     FilterGraphics filterGraphics;
+    SpectrumAnalyser spectrumAnalyser;
     
     // Things public to be destroyed before private stuff.
     // Destruction operates on a bottom to top of the code order.

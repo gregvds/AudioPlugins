@@ -188,11 +188,12 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     filterGraphics.gains[0] = xfeedGainSlider.getValue();
     filterGraphics.gains[1] = directGainSlider.getValue();
     filterGraphics.phases[0] = delaySlider.getValue();
+    
     addAndMakeVisible(filterGraphics);
     
+    addAndMakeVisible(spectrumAnalyser);
     
-    addAndMakeVisible(processor.spectrumAnalyser);
-    
+    startTimerHz (24);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -203,6 +204,18 @@ GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 }
 
 //==============================================================================
+void GainSliderAudioProcessorEditor::timerCallback()
+{
+    spectrumAnalyser.getNextAudioBlock(processor.mOutputBuffer);
+    processor.iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[0], filterGraphics.scopeSize, processor.mSampleRate);
+    processor.iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[0], filterGraphics.scopeSize, processor.mSampleRate);
+    processor.iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[1], filterGraphics.scopeSize, processor.mSampleRate);
+    processor.iirCoefficientsDirect.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[1], filterGraphics.scopeSize, processor.mSampleRate);
+    filterGraphics.updatePhasesRange();
+    repaint();
+}
+
+//==============================================================================
 void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
@@ -210,11 +223,6 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     
     Rectangle<int> bounds = getLocalBounds();
     Rectangle<int> topPanel = bounds.removeFromLeft(4*DIALSIZE);
-    
-    processor.iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[0], filterGraphics.scopeSize, processor.mSampleRate);
-    processor.iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[0], filterGraphics.scopeSize, processor.mSampleRate);
-    processor.iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[1], filterGraphics.scopeSize, processor.mSampleRate);
-    processor.iirCoefficientsDirect.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[1], filterGraphics.scopeSize, processor.mSampleRate);
     
     if (guiLayoutMenu.getSelectedId() == 4)
     {
@@ -258,22 +266,22 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     
     if (guiLayoutMenu.getSelectedId() == 1)
     {
-        processor.spectrumAnalyser.setVisible(false);
+        spectrumAnalyser.setVisible(false);
         filterGraphics.setVisible(false);
     }
     if (guiLayoutMenu.getSelectedId() == 2)
     {
         spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
         filterGraphics.setBounds(spectrumFrame1);
-        processor.spectrumAnalyser.setVisible(false);
+        spectrumAnalyser.setVisible(false);
         filterGraphics.setVisible(true);
     }
     else if (guiLayoutMenu.getSelectedId() == 3)
     {
         spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
-        processor.spectrumAnalyser.setBounds(spectrumFrame1);
+        spectrumAnalyser.setBounds(spectrumFrame1);
         filterGraphics.setVisible(false);
-        processor.spectrumAnalyser.setVisible(true);
+        spectrumAnalyser.setVisible(true);
     }
     else if (guiLayoutMenu.getSelectedId() == 4)
     {
@@ -281,8 +289,8 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
         spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
         spectrumFrame2.enlargeIfAdjacent(leftSpectrumPart);
         filterGraphics.setBounds(spectrumFrame1);
-        processor.spectrumAnalyser.setBounds(spectrumFrame2);
-        processor.spectrumAnalyser.setVisible(true);
+        spectrumAnalyser.setBounds(spectrumFrame2);
+        spectrumAnalyser.setVisible(true);
         filterGraphics.setVisible(true);
     }
 
@@ -298,6 +306,7 @@ void GainSliderAudioProcessorEditor::resized()
 // Unavoidable methods that must be instanciated, even if not used
 void GainSliderAudioProcessorEditor::buttonClicked(Button *toggleButton)
 {
+    // repaint();
 }
 
 void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
@@ -320,6 +329,7 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
 
         setSize(guiSizes[guiLayoutIndex][0], guiSizes[guiLayoutIndex][1]);
     }
+    // repaint();
 }
 
 void GainSliderAudioProcessorEditor::sliderValueChanged (Slider *slider)
@@ -341,4 +351,5 @@ void GainSliderAudioProcessorEditor::sliderValueChanged (Slider *slider)
     {
         filterGraphics.gains[0] = xfeedGainSlider.getValue();
     }
+    // repaint();
 }
