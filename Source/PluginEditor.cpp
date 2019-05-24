@@ -27,6 +27,10 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     openGLContext.attachTo (*getTopLevelComponent());
 #endif
     
+//#ifndef JUCE_ENABLE_REPAINT_DEBUGGING
+//#define JUCE_ENABLE_REPAINT_DEBUGGING 0
+//#endif
+    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     // Size is dynamic regarding the number of objects
@@ -193,7 +197,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     addAndMakeVisible(spectrumAnalyser);
     
-    startTimerHz (24);
+    startTimerHz (60);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -206,11 +210,6 @@ GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 //==============================================================================
 void GainSliderAudioProcessorEditor::timerCallback()
 {
-    spectrumAnalyser.getNextAudioBlock(processor.mOutputBuffer);
-    processor.iirCoefficientsXfeed.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[0], filterGraphics.scopeSize, processor.mSampleRate);
-    processor.iirCoefficientsXfeed.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[0], filterGraphics.scopeSize, processor.mSampleRate);
-    processor.iirCoefficientsDirect.getMagnitudeForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopeGain[1], filterGraphics.scopeSize, processor.mSampleRate);
-    processor.iirCoefficientsDirect.getPhaseForFrequencyArray(filterGraphics.scopeFreq, filterGraphics.scopePhase[1], filterGraphics.scopeSize, processor.mSampleRate);
     filterGraphics.updatePhasesRange();
     repaint();
 }
@@ -220,16 +219,16 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
-    
-    Rectangle<int> bounds = getLocalBounds();
-    Rectangle<int> topPanel = bounds.removeFromLeft(4*DIALSIZE);
+
+    bounds = getLocalBounds();
+    topPanel = bounds.removeFromLeft(4*DIALSIZE);
     
     if (guiLayoutMenu.getSelectedId() == 4)
     {
         leftSpectrumPart = topPanel.removeFromBottom(SPECTRUMHEIGHT);
     }
     
-    Rectangle<int> menu = topPanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
+    menu = topPanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
     
     filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
@@ -243,10 +242,10 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     
     int sliderSize = topPanel.getWidth()/4;
     
-    Rectangle<int> dials = topPanel.removeFromLeft(sliderSize);
-    Rectangle<int> slider1 = topPanel.removeFromLeft(sliderSize);
-    Rectangle<int> slider2 = topPanel.removeFromLeft(sliderSize);
-    Rectangle<int> slider3 = topPanel.removeFromLeft(sliderSize);
+    dials = topPanel.removeFromLeft(sliderSize);
+    slider1 = topPanel.removeFromLeft(sliderSize);
+    slider2 = topPanel.removeFromLeft(sliderSize);
+    slider3 = topPanel.removeFromLeft(sliderSize);
     
     int dialSize = dials.getHeight() - 3 * (LABELHEIGHT + TEXTBOXHEIGT);
     
@@ -298,7 +297,6 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 
 void GainSliderAudioProcessorEditor::resized()
 {
-    
 }
 
 
@@ -306,7 +304,6 @@ void GainSliderAudioProcessorEditor::resized()
 // Unavoidable methods that must be instanciated, even if not used
 void GainSliderAudioProcessorEditor::buttonClicked(Button *toggleButton)
 {
-    // repaint();
 }
 
 void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
@@ -326,10 +323,8 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
     if (comboBox == &guiLayoutMenu)
     {
         auto guiLayoutIndex = guiLayoutMenu.getSelectedId() - 1;
-
         setSize(guiSizes[guiLayoutIndex][0], guiSizes[guiLayoutIndex][1]);
     }
-    // repaint();
 }
 
 void GainSliderAudioProcessorEditor::sliderValueChanged (Slider *slider)
@@ -351,5 +346,4 @@ void GainSliderAudioProcessorEditor::sliderValueChanged (Slider *slider)
     {
         filterGraphics.gains[0] = xfeedGainSlider.getValue();
     }
-    // repaint();
 }

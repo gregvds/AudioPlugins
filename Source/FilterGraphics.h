@@ -47,7 +47,6 @@ public:
     FilterGraphics()
     {
         tooltipWindow->setMillisecondsBeforeTipAppears (500);
-        //childrenOfGUI = this->getParentComponent()->getChildren();
         
         fillArrays(stepsPerDecuple);
         
@@ -218,7 +217,6 @@ public:
         
         maxPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
         minPhaseDisplay.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
-
         
         // draw the curves
         drawFrame(g);
@@ -658,11 +656,10 @@ private:
         }
         scopeIndex = 0;
     }
-    
 
     
 //==============================================================================
-
+    
     Array<Component *> childrenOfGUI;
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
@@ -717,7 +714,6 @@ private:
 //==============================================================================
 public:
 
-    
     double scopeFreq [scopeSize];
     double scopeGain [2][scopeSize];
     double scopePhase [2][scopeSize];

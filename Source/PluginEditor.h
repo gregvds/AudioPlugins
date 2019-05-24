@@ -97,7 +97,6 @@ public:
 
     //==============================================================================
     void paint (Graphics&) override;
-    //void repaint ();
     void resized() override;
     void timerCallback() override;
     void sliderValueChanged(Slider *slider) override;
@@ -133,6 +132,13 @@ private:
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
+    Rectangle<int> bounds;
+    Rectangle<int> topPanel;
+    Rectangle<int> menu;
+    Rectangle<int> dials;
+    Rectangle<int> slider1;
+    Rectangle<int> slider2;
+    Rectangle<int> slider3;
     Rectangle<int> leftSpectrumPart;
     Rectangle<int> spectrumFrame1;
     Rectangle<int> spectrumFrame2;

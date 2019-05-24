@@ -11,8 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
-#include "SpectrumAnalyser.h"
-#include "FilterGraphics.h"
+
 
 #define DELAY_ID "delay"
 #define DELAY_NAME "Delay"
@@ -95,10 +94,6 @@ public:
     
     double mSampleRate { 44100 };
 
-    // Audio output buffer for Spectrum analyser
-    AudioBuffer<float> mOutputBuffer;
-    int mOutputBufferSize { 0 };
-
 private:
     
     // Audio buffer for filtering the crossfeed signal only
@@ -115,6 +110,8 @@ private:
     // Processor duplicators for the filters
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirLowPassFilterDuplicator;
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirHighPassFilterDuplicator;
+    
+    AudioProcessorEditor* thisEditor;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GainSliderAudioProcessor)
