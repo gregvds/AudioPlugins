@@ -38,6 +38,13 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
 {
+    treeState.removeParameterListener(DELAY_ID, this);
+    treeState.removeParameterListener(FREQ_ID, this);
+    treeState.removeParameterListener(Q_ID, this);
+    treeState.removeParameterListener(SEP_ID, this);
+    treeState.removeParameterListener(DGAIN_ID, this);
+    treeState.removeParameterListener(XGAIN_ID, this);
+    treeState.removeParameterListener(TYPE_ID, this);
 }
 
 //==============================================================================

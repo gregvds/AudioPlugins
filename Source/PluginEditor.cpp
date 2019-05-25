@@ -89,7 +89,10 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     delaySlider.setNumDecimalPlacesToDisplay(0);
     delaySlider.setTextValueSuffix(CharPointer_UTF8 (" \xc2\xb5s"));
     delaySlider.setSkewFactorFromMidPoint(50.0f);
-    delaySlider.addListener(this);
+    //delaySlider.addListener(this);
+    delaySlider.onValueChange = [this] {filterGraphics.phases[0] = delaySlider.getValue();
+                                        filterGraphics.updatePhasesRange();
+                                        repaint(); };
     delaySlider.setTooltip(TRANS ("Delay time"));
     addAndMakeVisible(delaySlider);
     delayLabel.setText("Crossfeed delay", NotificationType::dontSendNotification);
@@ -105,7 +108,11 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencySlider.setRange(400.0f, 1000.0f);
     frequencySlider.setValue(700.0f);
     frequencySlider.setSkewFactorFromMidPoint(600.0f);
-    frequencySlider.addListener(this);
+    //frequencySlider.addListener(this);
+    frequencySlider.onValueChange = [this] {filterGraphics.freqs[0] = frequencySlider.getValue();
+                                            filterGraphics.freqs[1] = frequencySlider.getValue();
+                                            filterGraphics.updatePhasesRange();
+                                            repaint(); };
     frequencySlider.setTooltip(TRANS ("Crossfeed cutoff frequency"));
     addAndMakeVisible(frequencySlider);
     frequencyLabel.setText("Cutoff frequency", NotificationType::dontSendNotification);
@@ -121,7 +128,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     qSlider.setRange(0.1f, 1.0f);
     qSlider.setValue(0.5f);
     qSlider.setSkewFactorFromMidPoint(0.3f);
-    qSlider.addListener(this);
+    //qSlider.addListener(this);
+    qSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
+                                    repaint(); };
     qSlider.setTooltip(TRANS ("Filter quality"));
     addAndMakeVisible(qSlider);
     qLabel.setText("Quality", NotificationType::dontSendNotification);
@@ -137,7 +146,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     separationSlider.setRange(-6.0f, 0.0f);
     separationSlider.setValue(-4.0f);
     separationSlider.setSkewFactorFromMidPoint(-4.0f);
-    separationSlider.addListener(this);
+    //separationSlider.addListener(this);
+    separationSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
+                                             repaint(); };
     separationSlider.setTooltip(TRANS ("Separation between direct and crossfeed signals"));
     addAndMakeVisible(separationSlider);
     separationLabel.setText("Separation", NotificationType::dontSendNotification);
@@ -152,7 +163,8 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setTextValueSuffix(" dB");
     directGainSlider.setRange(-10.0f, 10.0f);
     directGainSlider.setValue(0.0f);
-    directGainSlider.addListener(this);
+    //directGainSlider.addListener(this);
+    directGainSlider.onValueChange = [this] {filterGraphics.gains[1] = directGainSlider.getValue(); repaint(); };
     directGainSlider.setTooltip(TRANS ("Direct signal attenuation"));
     addAndMakeVisible(directGainSlider);
     directGainLabel.setText("Direct signal", NotificationType::dontSendNotification);
@@ -167,7 +179,8 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedGainSlider.setTextValueSuffix(" dB");
     xfeedGainSlider.setRange(-10.0f, 10.0f);
     xfeedGainSlider.setValue(0.0f);
-    xfeedGainSlider.addListener(this);
+    //xfeedGainSlider.addListener(this);
+    xfeedGainSlider.onValueChange = [this] {filterGraphics.gains[0] = xfeedGainSlider.getValue(); repaint(); };
     xfeedGainSlider.setTooltip(TRANS ("Xfeed signal attenuation"));
     addAndMakeVisible(xfeedGainSlider);
     xfeedGainLabel.setText("Xfeed signal", NotificationType::dontSendNotification);
@@ -197,7 +210,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     addAndMakeVisible(spectrumAnalyser);
     
-    startTimerHz (30);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -208,10 +220,6 @@ GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 }
 
 //==============================================================================
-void GainSliderAudioProcessorEditor::timerCallback()
-{
-    filterGraphics.updatePhasesRange();
-}
 
 //==============================================================================
 void GainSliderAudioProcessorEditor::paint (Graphics& g)
@@ -323,26 +331,4 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
         auto guiLayoutIndex = guiLayoutMenu.getSelectedId() - 1;
         setSize(guiSizes[guiLayoutIndex][0], guiSizes[guiLayoutIndex][1]);
     }
-}
-
-void GainSliderAudioProcessorEditor::sliderValueChanged (Slider *slider)
-{
-    if (slider == &delaySlider)
-    {
-        filterGraphics.phases[0] = delaySlider.getValue();
-    }
-    else if (slider == &frequencySlider)
-    {
-        filterGraphics.freqs[0] = frequencySlider.getValue();
-        filterGraphics.freqs[1] = frequencySlider.getValue();
-    }
-    else if (slider == &directGainSlider)
-    {
-        filterGraphics.gains[1] = directGainSlider.getValue();
-    }
-    else if (slider == &xfeedGainSlider)
-    {
-        filterGraphics.gains[0] = xfeedGainSlider.getValue();
-    }
-    repaint();
 }
