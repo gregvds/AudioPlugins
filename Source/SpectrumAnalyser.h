@@ -42,7 +42,7 @@ public:
 */
     enum
     {
-        fftOrder  = 11,            // [1]
+        fftOrder  = 12,            // [1]
         fftSize   = 1 << fftOrder, // [2]
         scopeSize = 1024            // [3]
     };
@@ -237,7 +237,7 @@ public:
  [7]: The fftData float array of size 4096 will contain the results of our FFT calculations.
  [8]: This temporary index keeps count of the amount of samples in the fifo.
  [9]: This temporary boolean tells us whether the next FFT block is ready to be rendered.
- [10]: The scopeData float array of size 512 will contain the points to display on the screen.
+ [10]: The scopeData float array of size scopeSize will contain the points to display on the screen.
 */
 private:
     

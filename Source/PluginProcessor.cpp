@@ -27,6 +27,13 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
 #endif
 {
     thisEditor = static_cast<GainSliderAudioProcessorEditor*>(createEditorIfNeeded());
+    treeState.addParameterListener(DELAY_ID, this);
+    treeState.addParameterListener(FREQ_ID, this);
+    treeState.addParameterListener(Q_ID, this);
+    treeState.addParameterListener(SEP_ID, this);
+    treeState.addParameterListener(DGAIN_ID, this);
+    treeState.addParameterListener(XGAIN_ID, this);
+    treeState.addParameterListener(TYPE_ID, this);
 }
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
@@ -206,6 +213,11 @@ bool GainSliderAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 }
 #endif
 
+void GainSliderAudioProcessor::parameterChanged (const String &parameterID, float newValue)
+{
+    updateFilterParameters();
+}
+
 void GainSliderAudioProcessor::updateFilterParameters ()
 {
     auto* sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
@@ -227,7 +239,7 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     {
         // No filtering
     }
-    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq,                                          static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeGain[0], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
+    iirCoefficientsXfeed.getMagnitudeForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq,                                       static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeGain[0], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
     iirCoefficientsXfeed.getPhaseForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq, static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopePhase[0], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
     iirCoefficientsDirect.getMagnitudeForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq, static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeGain[1], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
     iirCoefficientsDirect.getPhaseForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq, static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopePhase[1], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
@@ -254,10 +266,6 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     }
     
     auto* activeState = treeState.getRawParameterValue(ACTIVE_ID);
-    if (true)
-    {
-        updateFilterParameters();
-    }
     if (*activeState == true)
     {
         const int bufferLength = buffer.getNumSamples();

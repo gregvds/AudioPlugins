@@ -197,7 +197,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     addAndMakeVisible(spectrumAnalyser);
     
-    startTimerHz (60);
+    startTimerHz (30);
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -211,7 +211,6 @@ GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 void GainSliderAudioProcessorEditor::timerCallback()
 {
     filterGraphics.updatePhasesRange();
-    repaint();
 }
 
 //==============================================================================
@@ -292,7 +291,6 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
         spectrumAnalyser.setVisible(true);
         filterGraphics.setVisible(true);
     }
-
 }
 
 void GainSliderAudioProcessorEditor::resized()
@@ -346,4 +344,5 @@ void GainSliderAudioProcessorEditor::sliderValueChanged (Slider *slider)
     {
         filterGraphics.gains[0] = xfeedGainSlider.getValue();
     }
+    repaint();
 }

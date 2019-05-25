@@ -39,7 +39,8 @@
 //==============================================================================
 /**
 */
-class GainSliderAudioProcessor  : public AudioProcessor
+class GainSliderAudioProcessor  : public AudioProcessor,
+                                  public AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -95,6 +96,8 @@ public:
     double mSampleRate { 44100 };
 
 private:
+    
+    void parameterChanged (const String &parameterID, float newValue) override;
     
     // Audio buffer for filtering the crossfeed signal only
     AudioBuffer<float> mFilterBuffer;

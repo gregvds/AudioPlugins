@@ -545,11 +545,12 @@ private:
         {
             maxPhase = slider->getValue();
         }
+        repaint();
     }
 
     void comboBoxChanged(ComboBox *comboBox) override
     {
-        auto frequencyScaleTypeIndex = frequencyScaleTypeMenu.getSelectedId() - 1;
+        repaint();
     }
 
     
