@@ -114,6 +114,7 @@ private:
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirLowPassFilterDuplicator;
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirHighPassFilterDuplicator;
     
+    // To access the editor and some of its components
     AudioProcessorEditor* thisEditor;
     
     //==============================================================================

@@ -38,9 +38,7 @@ public:
 /**
  */
 
-class FilterGraphics :  public Component,
-                        public Slider::Listener,
-                        public ComboBox::Listener
+class FilterGraphics :  public Component
 
 {
 public:
@@ -57,7 +55,7 @@ public:
         minDBEditor.setTextValueSuffix(" dB");
         minDBEditor.setTooltip("Min dB displayed");
         minDBEditor.setLookAndFeel(&linearBarLookAndFeel);
-        minDBEditor.addListener(this);
+        minDBEditor.onValueChange = [this] {mindB = minDBEditor.getValue(); repaint(); };
         addAndMakeVisible(minDBEditor);
 
         maxDBEditor.setRange (0.01f, 20.0f);
@@ -66,7 +64,7 @@ public:
         maxDBEditor.setTextValueSuffix(" dB");
         maxDBEditor.setTooltip("Max dB displayed");
         maxDBEditor.setLookAndFeel(&linearBarLookAndFeel);
-        maxDBEditor.addListener(this);
+        maxDBEditor.onValueChange = [this] {maxdB = maxDBEditor.getValue(); repaint(); };
         addAndMakeVisible(maxDBEditor);
 
         minPhaseEditor.setRange (-500.0f, -0.01f);
@@ -75,7 +73,7 @@ public:
         minPhaseEditor.setTextValueSuffix(microSec);
         minPhaseEditor.setTooltip("Min phase displayed");
         minPhaseEditor.setLookAndFeel(&linearBarLookAndFeel);
-        minPhaseEditor.addListener(this);
+        minPhaseEditor.onValueChange = [this] {minPhase = minPhaseEditor.getValue(); repaint(); };
         addAndMakeVisible(minPhaseEditor);
 
         maxPhaseEditor.setRange (0.01f, 500.0f);
@@ -84,7 +82,7 @@ public:
         maxPhaseEditor.setTextValueSuffix(microSec);
         maxPhaseEditor.setTooltip("Max phase displayed");
         maxPhaseEditor.setLookAndFeel(&linearBarLookAndFeel);
-        maxPhaseEditor.addListener(this);
+        maxPhaseEditor.onValueChange = [this] {maxPhase = maxPhaseEditor.getValue(); repaint(); };
         addAndMakeVisible(maxPhaseEditor);
         
         // Combobox for frequency scale choice
@@ -93,7 +91,8 @@ public:
         frequencyScaleTypeMenu.addItem("type 3", 3);
         frequencyScaleTypeMenu.setSelectedId(1);
         frequencyScaleTypeMenu.setJustificationType(Justification::centred);
-        frequencyScaleTypeMenu.addListener(this);
+        //frequencyScaleTypeMenu.addListener(this);
+        frequencyScaleTypeMenu.onChange = [this] {repaint(); };
         frequencyScaleTypeMenu.setTooltip(TRANS ("Frequency scale choice"));
         addAndMakeVisible(frequencyScaleTypeMenu);
         
@@ -527,33 +526,6 @@ private:
     
 //==============================================================================
 
-    void sliderValueChanged(Slider *slider) override
-    {
-        if (slider == &minDBEditor)
-        {
-            mindB = slider->getValue();
-        }
-        else if (slider == &maxDBEditor)
-        {
-            maxdB = slider->getValue();
-        }
-        else if (slider == &minPhaseEditor)
-        {
-            minPhase = slider->getValue();
-        }
-        else if (slider == &maxPhaseEditor)
-        {
-            maxPhase = slider->getValue();
-        }
-        repaint();
-    }
-
-    void comboBoxChanged(ComboBox *comboBox) override
-    {
-        repaint();
-    }
-
-    
 //==============================================================================
 
     float getTimeForPhase(float phase, float freq)
