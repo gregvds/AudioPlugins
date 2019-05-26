@@ -44,6 +44,7 @@ class FilterGraphics :  public Component
 public:
     FilterGraphics()
     {
+        setOpaque (true);
         tooltipWindow->setMillisecondsBeforeTipAppears (500);
         
         fillArrays(stepsPerDecuple);
@@ -201,6 +202,9 @@ public:
 
     void paint(Graphics& g) override
     {
+        // (Our component is opaque, so we must completely fill the background with a solid colour)
+        g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+        
         bounds = getLocalBounds();
         fieldBar = bounds.removeFromTop(TEXTBOXHEIGHT);
         drawingArea = bounds.reduced (3, 0);
@@ -581,13 +585,21 @@ private:
     float getFilterGainForFrequency(float freq, int filterIndex)
     {
         int scopeIndex = getScopeIndexForFrequency(freq);
-        return jmap(freq, (float)scopeFreq[scopeIndex], (float)scopeFreq[scopeIndex + 1], (float)scopeGain[filterIndex][scopeIndex], (float)scopeGain[filterIndex][scopeIndex + 1]);
+        if (scopeIndex > 0)
+        {
+            return jmap(freq, (float)scopeFreq[scopeIndex], (float)scopeFreq[scopeIndex + 1], (float)scopeGain[filterIndex][scopeIndex], (float)scopeGain[filterIndex][scopeIndex + 1]);
+        }
+        return 0.0f;
     }
     
     float getFilterPhaseForFrequency(float freq, int filterIndex)
     {
         int scopeIndex = getScopeIndexForFrequency(freq);
-        return jmap(freq, (float)scopeFreq[scopeIndex], (float)scopeFreq[scopeIndex + 1], getTimeForPhase((float)scopePhase[filterIndex][scopeIndex], (float)scopeFreq[scopeIndex]), getTimeForPhase((float)scopePhase[filterIndex][scopeIndex + 1], (float)scopeFreq[scopeIndex + 1]));
+        if (scopeIndex >0)
+        {
+            return jmap(freq, (float)scopeFreq[scopeIndex], (float)scopeFreq[scopeIndex + 1], getTimeForPhase((float)scopePhase[filterIndex][scopeIndex], (float)scopeFreq[scopeIndex]), getTimeForPhase((float)scopePhase[filterIndex][scopeIndex + 1], (float)scopeFreq[scopeIndex + 1]));
+        }
+        return 0.0f;
     }
     
     float getScopeIndexForFrequency(float freq)
@@ -601,7 +613,7 @@ private:
                 return i-1;
             }
         }
-        //return nanf(<#const char *#>);
+        return -1;
     }
     
 //==============================================================================

@@ -33,7 +33,6 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
     treeState.addParameterListener(SEP_ID, this);
     treeState.addParameterListener(DGAIN_ID, this);
     treeState.addParameterListener(XGAIN_ID, this);
-    treeState.addParameterListener(TYPE_ID, this);
 }
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
@@ -44,7 +43,6 @@ GainSliderAudioProcessor::~GainSliderAudioProcessor()
     treeState.removeParameterListener(SEP_ID, this);
     treeState.removeParameterListener(DGAIN_ID, this);
     treeState.removeParameterListener(XGAIN_ID, this);
-    treeState.removeParameterListener(TYPE_ID, this);
 }
 
 //==============================================================================
@@ -64,7 +62,6 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     auto activeParams = std::make_unique<AudioParameterBool> (ACTIVE_ID, ACTIVE_NAME, true);
     auto guiParams = std::make_unique<AudioParameterChoice> (SPECTR_ID, SPECT_NAME, StringArray {"Plugin only", "+ Diagrams", "+ Spectrum", "Full plugin"}, 1);
     auto settingsParams = std::make_unique<AudioParameterChoice> (SETTINGS_ID, SETTINGS_NAME, StringArray {"Full", "Medium", "Light", "Pure Haas"}, 1);
-    auto typeParams = std::make_unique<AudioParameterChoice> (TYPE_ID, TYPE_NAME, StringArray {"Shelf", "Pass", "None"}, 0);
     
     params.push_back(std::move(delayParams));
     params.push_back(std::move(freqParams));
@@ -75,8 +72,6 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     params.push_back(std::move(activeParams));
     params.push_back(std::move(guiParams));
     params.push_back(std::move(settingsParams));
-    params.push_back(std::move(typeParams));
-    
     
     return {params.begin(), params.end()};
 }
@@ -230,22 +225,10 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     auto* sliderFreqValue = treeState.getRawParameterValue(FREQ_ID);
     auto* sliderqValue = treeState.getRawParameterValue(Q_ID);
     auto* sliderSepValue = treeState.getRawParameterValue(SEP_ID);
-    auto* filterType = treeState.getRawParameterValue(TYPE_ID);
+
+    iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
+    iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(*sliderSepValue));
     
-    if (*filterType == 0)
-    {
-        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
-        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(*sliderSepValue));
-    }
-    else if (*filterType == 1)
-    {
-        iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowPass(mSampleRate, *sliderFreqValue * 2.0f, *sliderqValue);
-        iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeHighPass(mSampleRate, *sliderFreqValue / 2.0f, *sliderqValue);
-    }
-    else if (*filterType == 2)
-    {
-        // No filtering
-    }
     iirCoefficientsXfeed.getMagnitudeForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq,                                       static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeGain[0], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
     iirCoefficientsXfeed.getPhaseForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq, static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopePhase[0], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
     iirCoefficientsDirect.getMagnitudeForFrequencyArray(static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeFreq, static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeGain[1], static_cast<GainSliderAudioProcessorEditor*>(thisEditor)->filterGraphics.scopeSize, mSampleRate);
@@ -272,6 +255,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         buffer.clear (i, 0, buffer.getNumSamples());
     }
     
+    // If filter is activated
     auto* activeState = treeState.getRawParameterValue(ACTIVE_ID);
     if (*activeState == true)
     {
@@ -315,7 +299,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         dsp::AudioBlock<float> block2 (buffer);
         iirHighPassFilterDuplicator.process(dsp::ProcessContextReplacing<float> (block2));
 
-        // Gain adjustment to the main signal (To be removed in the end? Useful to debug)
+        // Gain adjustment to the main signal
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
             auto* DirectChannelData = buffer.getWritePointer (channel);
@@ -338,6 +322,8 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mWritePosition += buffer.getNumSamples();
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
+    
+    // If spectrum is displayed, we push the output buffer into its fifo
     auto* spectrumState = treeState.getRawParameterValue(SPECTR_ID);
     if (*spectrumState == 2 or *spectrumState == 3)
     {

@@ -26,6 +26,7 @@ public:
     {
 
         startTimerHz (30);
+        setOpaque (true);
         drawingArea = getLocalBounds();
     }
     
@@ -165,6 +166,9 @@ public:
 
     void paint(Graphics& g) override
     {
+        // (Our component is opaque, so we must completely fill the background with a solid colour)
+        g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+        
         drawingArea = getLocalBounds().reduced (3, 3);
         
         drawFrame(g);

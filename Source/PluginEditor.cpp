@@ -46,7 +46,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     activeStateToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, ACTIVE_ID, activeStateToggleButton);
     guiLayoutMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, SPECTR_ID, guiLayoutMenu);
     settingsMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, SETTINGS_ID, crossFeedMenu);
-    filterTypeMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, TYPE_ID, filterTypeMenu);
 
     activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
     activeStateToggleButton.setClickingTogglesState(true);
@@ -72,15 +71,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     crossFeedMenu.setTooltip(TRANS ("Global intensity settings"));
     addAndMakeVisible(crossFeedMenu);
     
-    filterTypeMenu.addItem ("Shelf", 1);
-    filterTypeMenu.addItem("Pass", 2);
-    filterTypeMenu.addItem("None", 3);
-    filterTypeMenu.setSelectedId(1);
-    filterTypeMenu.setJustificationType(Justification::centred);
-    filterTypeMenu.addListener(this);
-    filterTypeMenu.setTooltip(TRANS ("Filter types"));
-    addAndMakeVisible(filterTypeMenu);
-    
     delaySlider.setName("delaySlider");
     delaySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     delaySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
@@ -89,7 +79,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     delaySlider.setNumDecimalPlacesToDisplay(0);
     delaySlider.setTextValueSuffix(CharPointer_UTF8 (" \xc2\xb5s"));
     delaySlider.setSkewFactorFromMidPoint(50.0f);
-    //delaySlider.addListener(this);
     delaySlider.onValueChange = [this] {filterGraphics.phases[0] = delaySlider.getValue();
                                         filterGraphics.updatePhasesRange();
                                         repaint(); };
@@ -108,7 +97,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencySlider.setRange(400.0f, 1000.0f);
     frequencySlider.setValue(700.0f);
     frequencySlider.setSkewFactorFromMidPoint(600.0f);
-    //frequencySlider.addListener(this);
     frequencySlider.onValueChange = [this] {filterGraphics.freqs[0] = frequencySlider.getValue();
                                             filterGraphics.freqs[1] = frequencySlider.getValue();
                                             filterGraphics.updatePhasesRange();
@@ -128,7 +116,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     qSlider.setRange(0.1f, 1.0f);
     qSlider.setValue(0.5f);
     qSlider.setSkewFactorFromMidPoint(0.3f);
-    //qSlider.addListener(this);
     qSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
                                     repaint(); };
     qSlider.setTooltip(TRANS ("Filter quality"));
@@ -146,7 +133,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     separationSlider.setRange(-6.0f, 0.0f);
     separationSlider.setValue(-4.0f);
     separationSlider.setSkewFactorFromMidPoint(-4.0f);
-    //separationSlider.addListener(this);
     separationSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
                                              repaint(); };
     separationSlider.setTooltip(TRANS ("Separation between direct and crossfeed signals"));
@@ -163,7 +149,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setTextValueSuffix(" dB");
     directGainSlider.setRange(-10.0f, 10.0f);
     directGainSlider.setValue(0.0f);
-    //directGainSlider.addListener(this);
     directGainSlider.onValueChange = [this] {filterGraphics.gains[1] = directGainSlider.getValue(); repaint(); };
     directGainSlider.setTooltip(TRANS ("Direct signal attenuation"));
     addAndMakeVisible(directGainSlider);
@@ -179,7 +164,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedGainSlider.setTextValueSuffix(" dB");
     xfeedGainSlider.setRange(-10.0f, 10.0f);
     xfeedGainSlider.setValue(0.0f);
-    //xfeedGainSlider.addListener(this);
     xfeedGainSlider.onValueChange = [this] {filterGraphics.gains[0] = xfeedGainSlider.getValue(); repaint(); };
     xfeedGainSlider.setTooltip(TRANS ("Xfeed signal attenuation"));
     addAndMakeVisible(xfeedGainSlider);
@@ -207,9 +191,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     filterGraphics.phases[0] = delaySlider.getValue();
     
     addAndMakeVisible(filterGraphics);
-    
     addAndMakeVisible(spectrumAnalyser);
-    
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -220,6 +202,8 @@ GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 }
 
 //==============================================================================
+
+
 
 //==============================================================================
 void GainSliderAudioProcessorEditor::paint (Graphics& g)
@@ -237,10 +221,9 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     
     menu = topPanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
     
-    filterTypeMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
-    activeStateToggleButton.setBounds(menu.removeFromLeft(DIALSIZE));
-    guiLayoutMenu.setBounds(menu.removeFromLeft(DIALSIZE));
+    guiLayoutMenu.setBounds(menu.removeFromRight(DIALSIZE));
+    activeStateToggleButton.setBounds(menu.removeFromRight(DIALSIZE));
     
     g.setColour (Colours::silver);
     topPanel = topPanel.reduced(3,3);
@@ -316,15 +299,15 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
 {
     if (comboBox == &crossFeedMenu)
     {
-        auto filterTypeIndex = filterTypeMenu.getSelectedId() - 1;
         auto filterIntensityIndex = crossFeedMenu.getSelectedId() - 1;
         
-        delaySlider.setValue(settings[filterIntensityIndex][filterTypeIndex][0]);
-        frequencySlider.setValue(settings[filterIntensityIndex][filterTypeIndex][1]);
-        separationSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][2]);
-        qSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][3]);
-        directGainSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][4]);
-        xfeedGainSlider.setValue(settings[filterIntensityIndex][filterTypeIndex][5]);
+        // TODO: implify the settings structure in .h and here
+        delaySlider.setValue(settings[filterIntensityIndex][0][0]);
+        frequencySlider.setValue(settings[filterIntensityIndex][0][1]);
+        separationSlider.setValue(settings[filterIntensityIndex][0][2]);
+        qSlider.setValue(settings[filterIntensityIndex][0][3]);
+        directGainSlider.setValue(settings[filterIntensityIndex][0][4]);
+        xfeedGainSlider.setValue(settings[filterIntensityIndex][0][5]);
     }
     if (comboBox == &guiLayoutMenu)
     {

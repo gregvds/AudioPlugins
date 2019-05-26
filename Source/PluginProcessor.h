@@ -31,9 +31,6 @@
 #define SPECT_NAME "Spectrum"
 #define SETTINGS_ID "settings"
 #define SETTINGS_NAME "Settings"
-#define TYPE_ID "type"
-#define TYPE_NAME "Type"
-
 
 
 //==============================================================================
@@ -89,10 +86,6 @@ public:
     AudioProcessorValueTreeState treeState;
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
-    // Useful to get magnitude and phase of the filters
-    dsp::IIR::Coefficients<float> iirCoefficientsXfeed;
-    dsp::IIR::Coefficients<float> iirCoefficientsDirect;
-    
     double mSampleRate { 44100 };
 
 private:
@@ -109,6 +102,10 @@ private:
     // Variables useful for the delay buffer
     int mWritePosition { 0 };
     int mSamplesPerBlock { 512 };
+    
+    // dsp filters coefficients
+    dsp::IIR::Coefficients<float> iirCoefficientsXfeed;
+    dsp::IIR::Coefficients<float> iirCoefficientsDirect;
     
     // Processor duplicators for the filters
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirLowPassFilterDuplicator;
