@@ -33,6 +33,8 @@ GainSliderAudioProcessor::GainSliderAudioProcessor()
     treeState.addParameterListener(SEP_ID, this);
     treeState.addParameterListener(DGAIN_ID, this);
     treeState.addParameterListener(XGAIN_ID, this);
+    
+    treeState.state = ValueTree (JucePlugin_Name);
 }
 
 GainSliderAudioProcessor::~GainSliderAudioProcessor()
@@ -61,7 +63,7 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     auto xGainParams = std::make_unique<AudioParameterFloat> (XGAIN_ID, XGAIN_NAME, NormalisableRange<float> (-10.0f, 10.0f), 0.0f, XGAIN_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
     auto activeParams = std::make_unique<AudioParameterBool> (ACTIVE_ID, ACTIVE_NAME, true);
     auto guiParams = std::make_unique<AudioParameterChoice> (SPECTR_ID, SPECT_NAME, StringArray {"Plugin only", "+ Diagrams", "+ Spectrum", "Full plugin"}, 1);
-    auto settingsParams = std::make_unique<AudioParameterChoice> (SETTINGS_ID, SETTINGS_NAME, StringArray {"Full", "Medium", "Light", "Pure Haas"}, 1);
+    auto settingsParams = std::make_unique<AudioParameterChoice> (SETTINGS_ID, SETTINGS_NAME, StringArray {"Full", "Medium", "Light", "Pure Haas", "user"}, 1);
     
     params.push_back(std::move(delayParams));
     params.push_back(std::move(freqParams));
@@ -376,7 +378,7 @@ bool GainSliderAudioProcessor::hasEditor() const
 
 AudioProcessorEditor* GainSliderAudioProcessor::createEditor()
 {
-    return new GainSliderAudioProcessorEditor (*this);
+    return new GainSliderAudioProcessorEditor (*this, treeState);
 }
 
 //==============================================================================
@@ -385,19 +387,19 @@ void GainSliderAudioProcessor::getStateInformation (MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
-//    MemoryOutputStream stream(destData, false);
-//    treeState.state.writeToStream (stream);
+    auto state = treeState.copyState();
+    std::unique_ptr<XmlElement> xml (state.createXml());
+    copyXmlToBinary (*xml, destData);
 }
 
 void GainSliderAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
-//    ValueTree tree = ValueTree::readFromData (data, size_t (sizeInBytes));
-//    if (tree.isValid())
-//    {
-//        treeState.state = tree;
-//    }
+    std::unique_ptr<XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
+    if (xmlState.get() != nullptr)
+        if (xmlState->hasTagName (treeState.state.getType()))
+            treeState.replaceState (ValueTree::fromXml (*xmlState));
 }
 
 //==============================================================================

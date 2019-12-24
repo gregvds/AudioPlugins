@@ -14,7 +14,7 @@ static Colour xfeedColour      = Colour(0xFFe5d865);
 static Colour directColour     = Colour(0xFFfbb040);
 static Colour separationColour = Colour(0xff6b8e23);
 static Colour freqColour       = Colour(0xFFf6f3ed);
-static Colour bandwidthColour  = Colour(0x40a88854);
+static Colour bandwidthColour  = Colour(0xFFa88854);
 
 static String microSec = CharPointer_UTF8 (" \xc2\xb5s");
 
@@ -157,7 +157,7 @@ public:
         g.fillRoundedRectangle(3.0f, y2, hFPos, height2, 5);
         
         // Draw bandwidth based on Q values and frequency of filter(s).
-        g.setColour (colours[3]);
+        g.setColour (bandwidthColour.withAlpha(0.25f));
         g.fillRoundedRectangle(lFPos, y1, hFPos - lFPos, height1, 5);
         g.fillRoundedRectangle(lFPos, y2, hFPos - lFPos, height2, 5);
         
@@ -208,6 +208,7 @@ public:
         bounds = getLocalBounds();
         fieldBar = bounds.removeFromTop(TEXTBOXHEIGHT);
         drawingArea = bounds.reduced (3, 0);
+        
         graph1 = drawingArea.removeFromTop(drawingArea.getHeight()/2).reduced(0,3);
         graph2 = drawingArea.removeFromTop(drawingArea.getHeight()).reduced(0,3);
         
@@ -554,12 +555,14 @@ private:
     
     float getFrequencyForPosition (float pos)
     {
-        return 20.0f * std::pow (2.0f, pos * 10.0f);
+        //return 20.0f * std::pow (2.0f, pos * 10.0f);
+        return 20.0f * std::pow (10.0f, 3.0f * pos);
     }
     
     float getPositionForFrequency (float freq)
     {
-        return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
+        //return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
+        return (std::log10 (freq / 20.0f) / 3.0f);
     }
     
     float getPositionForGain (float gain, float top, float bottom)

@@ -81,24 +81,90 @@ public:
     }
 };
 
+class MyColourSelector : public ColourSelector
+{
+public:
+    MyColourSelector()
+    {
+        
+    }
+    
+    ~MyColourSelector()
+    {
+        
+    }
+    
+    virtual int getNumSwatches() const override
+    {
+        return colourSwatches.size();
+    }
+    
+    virtual Colour getSwatchColour(int index) const override
+    {
+        return colourSwatches.getUnchecked(index);
+    }
+    
+    void setSwatchColour(int index, const Colour &newColour) override
+    {
+        colourSwatches.set(index, newColour);
+    }
+private:
+    Array<Colour> colourSwatches;
+};
+
+
+class MyPreferencesPanel : public PreferencesPanel
+{
+public:
+    MyPreferencesPanel()
+    {
+        colourSelector.setSwatchColour(0, delayColour);
+        colourSelector.setSwatchColour(1, freqColour);
+        colourSelector.setSwatchColour(2, bandwidthColour);
+        colourSelector.setSwatchColour(3, separationColour);
+        colourSelector.setSwatchColour(4, xfeedColour);
+        colourSelector.setSwatchColour(5, directColour);
+        colourSelector.setSwatchColour(6, outColour);
+        //DBG("number of swatches: " << colourSelector.getNumSwatches());
+    }
+    ~MyPreferencesPanel()
+    {
+        
+    }
+
+    virtual Component* createComponentForPage (const String &pageName) override
+    {
+        if (pageName == "Colours")
+        {
+            return &colourSelector;
+        }
+        //DBG("Nothing recognized");
+        return nullptr;
+    }
+    MyColourSelector colourSelector;
+private:
+    
+};
+
 //==============================================================================
 /**
  */
 
 class GainSliderAudioProcessorEditor  : public AudioProcessorEditor,
+                                        public Slider::Listener,
                                         public ComboBox::Listener,
                                         public Button::Listener
 {
 public:
-    GainSliderAudioProcessorEditor (GainSliderAudioProcessor&);
+    GainSliderAudioProcessorEditor (GainSliderAudioProcessor&, AudioProcessorValueTreeState& vts);
     ~GainSliderAudioProcessorEditor();
 
     //==============================================================================
     void paint (Graphics&) override;
     void resized() override;
+    void sliderValueChanged(Slider *slider) override;
     void comboBoxChanged(ComboBox *comboBox) override;
     void buttonClicked(Button *toggleButton) override;
-    void mouseDoubleClick (const MouseEvent& e) override;
     
 private:
     
@@ -109,6 +175,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     GainSliderAudioProcessor& processor;
+    AudioProcessorValueTreeState& valueTreeState;
     
     // These must be declared before the components using them
     RotaryLookAndFeel rotaryLookAndFeel;
@@ -124,6 +191,9 @@ private:
     ComboBox guiLayoutMenu;
     
     ToggleButton activeStateToggleButton { "Active" };
+    TextButton preferencesButton { "preferencesButton", "Preferences" };
+    
+    MyPreferencesPanel prefsPanel;
     
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
@@ -145,26 +215,7 @@ private:
                             {4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT},
                             {4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT}};
     
-    // filter settings, first index is intensity, second is type
-    // See the filterTypeMenu and crossfeedMenu options
-    // [0][0] is Full settings for shelf filter and so on
-    float settings [4] [3] [6] = {  {
-                                        {0.0f , 400.0f , -5.0f, 0.57f, 5.0f, -5.0f},
-                                        {75.0f, 1000.0f, -1.0f, 0.66f, 2.0f, 2.0f},
-                                        {}
-                                    }, {
-                                        {94.0f, 700.0f , -4.0f, 0.45f, 4.0f, -4.0f},
-                                        {},
-                                        {}
-                                    }, {
-                                        {67.0f, 400.0f , -3.0f, 0.6f, 3.1f, -3.1f},
-                                        {},
-                                        {}
-                                    }, {
-                                        {270.0f, 700.0f , 0.0f, 1.0f, 1.0f, -3.0f},
-                                        {},
-                                        {}
-                                    }};
+    std::map < String, std::vector<float> > settingsDictionnary;
     
 public:
  

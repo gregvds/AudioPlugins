@@ -11,14 +11,9 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-static Colour colour1 = Colour(0xFF726658);
-static Colour colour2 = Colour(0xFFf6f3ed);
-static Colour colour3 = Colour(0xFFa88854);
-
-
 //==============================================================================
-GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p)
+GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioProcessor& p, AudioProcessorValueTreeState& vts)
+: AudioProcessorEditor (&p), processor (p), valueTreeState (vts)
 {
     setName("mainPluginEditorGUI");
     tooltipWindow->setMillisecondsBeforeTipAppears (500);
@@ -27,25 +22,12 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     openGLContext.attachTo (*getTopLevelComponent());
 #endif
     
-//#ifndef JUCE_ENABLE_REPAINT_DEBUGGING
-//#define JUCE_ENABLE_REPAINT_DEBUGGING 0
-//#endif
-    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     // Size is dynamic regarding the number of objects
     // setResizable (true, true);
     setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT);
     
-    delaySliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DELAY_ID, delaySlider);
-    freqSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, FREQ_ID, frequencySlider);
-    qSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, Q_ID, qSlider);
-    sepSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, SEP_ID, separationSlider);
-    directGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, DGAIN_ID, directGainSlider);
-    xfeedGainSliderAttach = std::make_unique<AudioProcessorValueTreeState::SliderAttachment>(processor.treeState, XGAIN_ID, xfeedGainSlider);
-    activeStateToggleButtonAttach = std::make_unique<AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, ACTIVE_ID, activeStateToggleButton);
-    guiLayoutMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, SPECTR_ID, guiLayoutMenu);
-    settingsMenuAttach = std::make_unique<AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, SETTINGS_ID, crossFeedMenu);
 
     activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
     activeStateToggleButton.setClickingTogglesState(true);
@@ -61,11 +43,17 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     guiLayoutMenu.setTooltip(TRANS ("Gui layout choice"));
     addAndMakeVisible(guiLayoutMenu);
 
+    crossFeedMenu.setEditableText(true);
+    crossFeedMenu.addSectionHeading("Default presets");
     crossFeedMenu.addItem("Full", 1);
     crossFeedMenu.addItem("Medium", 2);
     crossFeedMenu.addItem("Light", 3);
     crossFeedMenu.addItem("Pure Haas", 4);
     crossFeedMenu.setSelectedId(2);
+    crossFeedMenu.addSeparator();
+    crossFeedMenu.addSectionHeading("User presets");
+    crossFeedMenu.addItem("Save...", 5);
+    //crossFeedMenu.setItemEnabled(5, true);
     crossFeedMenu.setJustificationType(Justification::centred);
     crossFeedMenu.addListener(this);
     crossFeedMenu.setTooltip(TRANS ("Global intensity settings"));
@@ -75,10 +63,10 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     delaySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     delaySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     delaySlider.setRange(0.0f, 320.0f);
-    delaySlider.setValue(100.0f);
     delaySlider.setNumDecimalPlacesToDisplay(0);
     delaySlider.setTextValueSuffix(CharPointer_UTF8 (" \xc2\xb5s"));
     delaySlider.setSkewFactorFromMidPoint(50.0f);
+    delaySlider.addListener(this);
     delaySlider.onValueChange = [this] {filterGraphics.phases[0] = delaySlider.getValue();
                                         filterGraphics.updatePhasesRange();
                                         repaint(); };
@@ -95,7 +83,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     frequencySlider.setTextValueSuffix(" Hz");
     frequencySlider.setRange(400.0f, 1000.0f);
-    frequencySlider.setValue(700.0f);
     frequencySlider.setSkewFactorFromMidPoint(600.0f);
     frequencySlider.onValueChange = [this] {filterGraphics.freqs[0] = frequencySlider.getValue();
                                             filterGraphics.freqs[1] = frequencySlider.getValue();
@@ -114,7 +101,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     qSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     qSlider.setTextValueSuffix(" Q");
     qSlider.setRange(0.1f, 1.0f);
-    qSlider.setValue(0.5f);
     qSlider.setSkewFactorFromMidPoint(0.3f);
     qSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
                                     repaint(); };
@@ -131,7 +117,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     separationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     separationSlider.setTextValueSuffix(" dB");
     separationSlider.setRange(-6.0f, 0.0f);
-    separationSlider.setValue(-4.0f);
     separationSlider.setSkewFactorFromMidPoint(-4.0f);
     separationSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
                                              repaint(); };
@@ -148,7 +133,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     directGainSlider.setTextValueSuffix(" dB");
     directGainSlider.setRange(-10.0f, 10.0f);
-    directGainSlider.setValue(0.0f);
     directGainSlider.onValueChange = [this] {filterGraphics.gains[1] = directGainSlider.getValue(); repaint(); };
     directGainSlider.setTooltip(TRANS ("Direct signal attenuation"));
     addAndMakeVisible(directGainSlider);
@@ -163,7 +147,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     xfeedGainSlider.setTextValueSuffix(" dB");
     xfeedGainSlider.setRange(-10.0f, 10.0f);
-    xfeedGainSlider.setValue(0.0f);
     xfeedGainSlider.onValueChange = [this] {filterGraphics.gains[0] = xfeedGainSlider.getValue(); repaint(); };
     xfeedGainSlider.setTooltip(TRANS ("Xfeed signal attenuation"));
     addAndMakeVisible(xfeedGainSlider);
@@ -173,9 +156,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedGainLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(xfeedGainLabel);
     
-    rotaryLookAndFeel1.setColour(Slider::ColourIds::thumbColourId, colour1);
-    rotaryLookAndFeel2.setColour(Slider::ColourIds::thumbColourId, colour2);
-    rotaryLookAndFeel3.setColour(Slider::ColourIds::thumbColourId, colour3);
+    rotaryLookAndFeel1.setColour(Slider::ColourIds::thumbColourId, delayColour);
+    rotaryLookAndFeel2.setColour(Slider::ColourIds::thumbColourId, freqColour);
+    rotaryLookAndFeel3.setColour(Slider::ColourIds::thumbColourId, bandwidthColour);
     
     delaySlider.setLookAndFeel(&rotaryLookAndFeel1);
     frequencySlider.setLookAndFeel(&rotaryLookAndFeel2);
@@ -184,6 +167,17 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     directGainSlider.setLookAndFeel(&directLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&xfeedLookAndFeel);
     
+    delaySliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, DELAY_ID, delaySlider));
+    freqSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, FREQ_ID, frequencySlider));
+    qSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, Q_ID, qSlider));
+    sepSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, SEP_ID, separationSlider));
+    directGainSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, DGAIN_ID, directGainSlider));
+    xfeedGainSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, XGAIN_ID, xfeedGainSlider));
+    activeStateToggleButtonAttach.reset (new AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, ACTIVE_ID, activeStateToggleButton));
+    guiLayoutMenuAttach.reset (new AudioProcessorValueTreeState::ComboBoxAttachment (valueTreeState, SPECTR_ID, guiLayoutMenu));
+    settingsMenuAttach.reset (new AudioProcessorValueTreeState::ComboBoxAttachment (valueTreeState, SETTINGS_ID, crossFeedMenu));
+
+
     filterGraphics.freqs[0] = frequencySlider.getValue();
     filterGraphics.freqs[1] = frequencySlider.getValue();
     filterGraphics.gains[0] = xfeedGainSlider.getValue();
@@ -192,6 +186,28 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     addAndMakeVisible(filterGraphics);
     addAndMakeVisible(spectrumAnalyser);
+    
+    settingsDictionnary[String("Full")] = {0.0f , 400.0f , -5.0f, 0.57f, 5.0f, -5.0f};
+    settingsDictionnary[String("Medium")] = {94.0f, 700.0f , -4.0f, 0.45f, 4.0f, -4.0f};
+    settingsDictionnary[String("Light")] = {67.0f, 400.0f , -3.0f, 0.6f, 3.1f, -3.1f};
+    settingsDictionnary[String("Pure Haas")] = {270.0f, 700.0f , 0.0f, 1.0f, 1.0f, -3.0f};
+    
+    /*
+    preferencesButton.setButtonText("Preferences");
+    preferencesButton.onClick = [this] {prefsPanel.showInDialogBox("Preferences", 400, 400, getLookAndFeel().findColour (ResizableWindow::backgroundColourId)); };
+    addAndMakeVisible(preferencesButton);
+    
+    // Here we add the different pages of preferences in the panel.
+    prefsPanel.addSettingsPage("Colours", PAF_Data::colour_svg, PAF_Data::colour_svgSize);
+    prefsPanel.colourSelector.setSwatchColour(0, delayColour);
+    prefsPanel.colourSelector.setSwatchColour(1, freqColour);
+    prefsPanel.colourSelector.setSwatchColour(2, bandwidthColour);
+    prefsPanel.colourSelector.setSwatchColour(3, separationColour);
+    prefsPanel.colourSelector.setSwatchColour(4, xfeedColour);
+    prefsPanel.colourSelector.setSwatchColour(5, directColour);
+    prefsPanel.colourSelector.setSwatchColour(6, outColour);
+    DBG("Number of swatches" << prefsPanel.colourSelector.getNumSwatches());
+    */
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -203,11 +219,11 @@ GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
 
 //==============================================================================
 
-
-
 //==============================================================================
 void GainSliderAudioProcessorEditor::paint (Graphics& g)
 {
+    Graphics::ScopedSaveState state (g);
+    
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
 
@@ -222,6 +238,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     menu = topPanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
     
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
+    //preferencesButton.setBounds(menu.removeFromLeft(DIALSIZE));
     guiLayoutMenu.setBounds(menu.removeFromRight(DIALSIZE));
     activeStateToggleButton.setBounds(menu.removeFromRight(DIALSIZE));
     
@@ -291,6 +308,11 @@ void GainSliderAudioProcessorEditor::resized()
 
 //==============================================================================
 // Unavoidable methods that must be instanciated, even if not used
+void GainSliderAudioProcessorEditor::sliderValueChanged(Slider *slider)
+{
+    //DBG("In sliderValueChanged");
+}
+
 void GainSliderAudioProcessorEditor::buttonClicked(Button *toggleButton)
 {
 }
@@ -300,14 +322,29 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
     if (comboBox == &crossFeedMenu)
     {
         auto filterIntensityIndex = crossFeedMenu.getSelectedId() - 1;
-        
-        // TODO: implify the settings structure in .h and here
-        delaySlider.setValue(settings[filterIntensityIndex][0][0]);
-        frequencySlider.setValue(settings[filterIntensityIndex][0][1]);
-        separationSlider.setValue(settings[filterIntensityIndex][0][2]);
-        qSlider.setValue(settings[filterIntensityIndex][0][3]);
-        directGainSlider.setValue(settings[filterIntensityIndex][0][4]);
-        xfeedGainSlider.setValue(settings[filterIntensityIndex][0][5]);
+        auto filterIntensityName = crossFeedMenu.getItemText(filterIntensityIndex);
+        //DBG("filterIntensityName: " + filterIntensityName);
+        if ( filterIntensityName != "Save..." and settingsDictionnary.find(filterIntensityName) != settingsDictionnary.end() )
+        {
+            delaySlider.setValue(settingsDictionnary[filterIntensityName][0]);
+            frequencySlider.setValue(settingsDictionnary[filterIntensityName][1]);
+            separationSlider.setValue(settingsDictionnary[filterIntensityName][2]);
+            qSlider.setValue(settingsDictionnary[filterIntensityName][3]);
+            directGainSlider.setValue(settingsDictionnary[filterIntensityName][4]);
+            xfeedGainSlider.setValue(settingsDictionnary[filterIntensityName][5]);
+        }
+        else
+        {
+            // Modify text of item with the edited text of the combobox (don't know how to have this)
+            // add new text entry into settingsDictionnary with all the sliders current values
+            // add a new Save... entry into the combobox
+            // set the combobox to the new text entry
+            
+            crossFeedMenu.showEditor();
+            String newLabel = crossFeedMenu.getText();
+            DBG("newLabel: " + newLabel);
+            
+        }
     }
     if (comboBox == &guiLayoutMenu)
     {

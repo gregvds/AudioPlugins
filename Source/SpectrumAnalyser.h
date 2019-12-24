@@ -11,7 +11,28 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
+
 static Colour outColour = Colour(0xFFe5e27e);
+
+//==============================================================================
+/**
+ Classes to contain look and feel customizations for different types of sliders
+ */
+/*
+class LinearBarLookAndFeel2 : public LookAndFeel_V4,
+                             public Component
+{
+public:
+    LinearBarLookAndFeel2()
+    {
+        LookAndFeel_V4::setColour(Slider::trackColourId, getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
+        LookAndFeel_V4::setColour(Slider::textBoxTextColourId, Colours::silver);
+    }
+};
+*/
+//==============================================================================
+/**
+ */
 
 class SpectrumAnalyser : public Component,
                          private Timer
@@ -28,6 +49,54 @@ public:
         startTimerHz (30);
         setOpaque (true);
         drawingArea = getLocalBounds();
+        
+        // Combobox for frequency scale choice
+        fftWindowTypeMenu.addItem("hann", 1);
+        fftWindowTypeMenu.addItem("hamming", 2);
+        fftWindowTypeMenu.addItem("blackman", 3);
+        fftWindowTypeMenu.addItem("blackmanHarris", 4);
+        fftWindowTypeMenu.addItem("triangular", 5);
+        fftWindowTypeMenu.setSelectedId(1);
+        fftWindowTypeMenu.setJustificationType(Justification::centred);
+        //frequencyScaleTypeMenu.addListener(this);
+        fftWindowTypeMenu.onChange = [this] {repaint(); };
+        fftWindowTypeMenu.setTooltip(TRANS ("FFT Window function choice"));
+        addAndMakeVisible(fftWindowTypeMenu);
+        
+/*
+        // editable fields
+        skewVar1.setRange (0.0f, 1.0f);
+        skewVar1.setValue(var1);
+        skewVar1.setNumDecimalPlacesToDisplay(3);
+        skewVar1.setTextValueSuffix(" bool");
+        skewVar1.setTooltip("Skewing variable 1");
+        skewVar1.setLookAndFeel(&linearBarLookAndFeel2);
+        skewVar1.onValueChange = [this] {var1 = skewVar1.getValue(); };
+        addAndMakeVisible(skewVar1);
+
+        // editable fields
+        skewVar2.setRange (0.50f, 2.0f);
+        skewVar2.setValue(var2);
+        skewVar2.setNumDecimalPlacesToDisplay(3);
+        skewVar2.setTextValueSuffix(" ");
+        skewVar2.setTooltip("Skewing variable 2");
+        skewVar2.setLookAndFeel(&linearBarLookAndFeel2);
+        skewVar2.onValueChange = [this] {var2 = skewVar2.getValue(); };
+        addAndMakeVisible(skewVar2);
+
+        // editable fields
+        skewVar3.setRange (0.5f, 2.0f);
+        skewVar3.setValue(var3);
+        skewVar3.setNumDecimalPlacesToDisplay(3);
+        skewVar3.setTextValueSuffix(" ");
+        skewVar3.setTooltip("Skewing variable 3");
+        skewVar3.setLookAndFeel(&linearBarLookAndFeel2);
+        skewVar3.onValueChange = [this] {var3 = skewVar3.getValue(); };
+        addAndMakeVisible(skewVar3);
+*/
+        
+        
+        
     }
     
     ~SpectrumAnalyser()
@@ -38,14 +107,16 @@ public:
     [1]: The FFT order designates the size of the FFT window and the number of points
          on which it will operate corresponds to 2 to the power of the order.
          In this case, let's use an order of 11 which will produce an FFT with 2 ^ 11 = 2048 points.
-    [2]: To calculate the corresponding FFT size, we use the left bit shift operator which produces 2048 as binary number 100000000000.
+    [2]: To calculate the corresponding FFT size, we use the left bit shift operator which produces 2048 as binary number 100.000.000.000.
     [3]: We also set the number of points in the visual representation of the spectrum as a scope size of 1024.
 */
     enum
     {
-        fftOrder  = 12,            // [1]
-        fftSize   = 1 << fftOrder, // [2]
-        scopeSize = 1024            // [3]
+        fftOrder  = 12,              // [1]
+        fftSize   = 1 << fftOrder,   // [2]
+        scopeSize = 2048,            // [3]
+        TEXTBOXHEIGHT = 20,
+        TEXTBOXWIDTH = 100
     };
     
     //==============================================================================
@@ -117,12 +188,31 @@ public:
     {
         window.multiplyWithWindowingTable (fftData, fftSize);      // [1]
         forwardFFT.performFrequencyOnlyForwardTransform (fftData); // [2]
-        for (int i = 0; i < scopeSize; ++i)                        // [3]
+        //DBG("Frequency step: " << (float) mSampleRate / ((float) fftSize / 2.0f));
+        for (int i = 0; i < scopeSize; ++i)                        // [3] from 0 to 1023
         {
-            auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - i / (float) scopeSize) * 0.2f);
-            auto fftDataIndex = jlimit (0,
-                                        fftSize / 2,
-                                        (int) (skewedProportionX * fftSize / 2));
+            // for these 1024 steps, we need to go and pick data in a log10 way so as it renders correctly on the diagram in the end
+            // But we don't know how the frequencies are laid out in the fftData in the first hand...
+            auto fftDataIndex = i;
+            if (var1 < 0.5f)
+            {
+                /* This original proposition does not do it properly...
+                */
+                auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - i / (float) scopeSize) * 0.2f);
+                fftDataIndex = jlimit (0,
+                                            fftSize / 2,
+                                            (int) (skewedProportionX * fftSize / 2));
+            }
+            else
+            {
+                /* And a simple geometric proportion does not do it either...
+                */
+                fftDataIndex = jlimit (0,
+                                            fftSize / 2,
+                                            (int) ((float)i/var3));
+            
+            }
+            
             auto level = jmap (
                                jlimit (mindB,
                                        maxdB,
@@ -134,6 +224,10 @@ public:
                                0.0f,
                                1.0f);
             scopeData[i] = level;                                  // [4]
+            scopeDataFreqs[i] = ((float) mSampleRate / ((float) fftSize / 2.0f) ) * (float) i/var2;
+            //DBG("i: " << i);
+            //DBG("scopeDataFreqs[i]: " << scopeDataFreqs[i]);
+            //DBG("scopeData[i]: " << scopeData[i]);
         }
     }
 /*
@@ -150,12 +244,22 @@ public:
 
         Path p;
         p.startNewSubPath(3.0f, y + height);
-        
-        //auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - i / (float) scopeSize) * 0.2f);
-        
+                
         for (int i = 0; i < scopeSize; i++)
         {
-            float x1 = (float) jmap ((float)i,         0.0f,   (float)(scopeSize - 1), 3.0f,           (float) width + 3.0f);
+            float x1 = x;
+            if (var1 < 0.5f)
+            {
+                x1 = (float) jmap ((float) i,                                  0.0f, (float) scopeSize, 3.0f, (float) width + 3.0f);
+            }
+            else
+            {
+                //DBG("Freq: " << scopeDataFreqs[i]);
+                //DBG("Position: " << getPositionForFrequency(scopeDataFreqs[i]));
+                x1 = (float) jmap (getPositionForFrequency(scopeDataFreqs[i]), 0.0f,   1.0f,            3.0f, (float) width + 3.0f) + 1.0f;
+                //DBG("x1: " << x1);
+            }
+            //DBG("x1: " << x1);
             float y1 = jmap (jlimit(0.0f, 1.0f, scopeData[i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
             p.lineTo(x1, y1);
         }
@@ -169,8 +273,17 @@ public:
         // (Our component is opaque, so we must completely fill the background with a solid colour)
         g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
         
-        drawingArea = getLocalBounds().reduced (3, 3);
+        bounds = getLocalBounds();
+        fieldBar = bounds.removeFromBottom(TEXTBOXHEIGHT);
+        drawingArea = bounds.reduced (3, 3);
         
+        fftWindowTypeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        
+        /*
+        skewVar1.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
+        skewVar2.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
+        skewVar3.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
+        */
         drawFrame(g);
 
         // Silver frame around RT spectrum analysis
@@ -210,12 +323,14 @@ public:
     
     float getFrequencyForPosition (float pos)
     {
-        return 20.0f * std::pow (2.0f, pos * 10.0f);
+        //return 20.0f * std::pow (2.0f, pos * 10.0f);
+        return 20.0f * std::pow (10.0f, 3.0f * jlimit(0.0f, 1.0f, pos));
     }
     
     float getPositionForFrequency (float freq)
     {
-        return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
+        //return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
+        return (std::log10 (jlimit(20.0f, 20000.0f, freq) / 20.0f) / 3.0f);
     }
 
     float getPositionForGain (float gain, float top, float bottom)
@@ -245,6 +360,8 @@ public:
 */
 private:
     
+    double mSampleRate { 44100 };
+    
     dsp::FFT forwardFFT;                  // [4]
     dsp::WindowingFunction<float> window; // [5]
     float fifo [fftSize];                 // [6]
@@ -252,14 +369,33 @@ private:
     int fifoIndex = 0;                    // [8]
     bool nextFFTBlockReady = false;       // [9]
     float scopeData [scopeSize];          // [10]
+    float scopeDataFreqs [scopeSize];
     
     float mindB = -100.0f;
     float maxdB =    0.0f;
     
     Array<float> frequencies = {30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f, 90.0f, 100.0f, 200.0f, 300.0f, 400.0f, 500.0f, 600.0f, 700.0f, 800.0f, 900.0f, 1000.0f, 2000.0f, 3000.0f, 4000.0f, 5000.0f, 6000.0f, 7000.0f, 8000.0f, 9000.0f, 10000.0f};
+    Rectangle<int> bounds;
+    Rectangle<int> fieldBar;
     Rectangle<int> drawingArea;
     
-
+    float var1        = 1.0f;
+    float var2        = 2.0f;
+    float var3        = 1.0f;
+    /*
+    Array<dsp::WindowingFunction<float>> fftWindowTypeArray = {dsp::WindowingFunction<float>::hann,
+                                                                         dsp::WindowingFunction<float>::hamming,
+                                                                         dsp::WindowingFunction<float>::blackman,
+                                                                         dsp::WindowingFunction<float>::blackmanHarris,
+                                                                         dsp::WindowingFunction<float>::triangular};
+     */
+    //LinearBarLookAndFeel2 linearBarLookAndFeel2;
     
+    ComboBox fftWindowTypeMenu;
+/*
+    Slider skewVar1 { Slider::LinearBar, Slider::TextBoxAbove };
+    Slider skewVar2 { Slider::LinearBar, Slider::TextBoxAbove };
+    Slider skewVar3 { Slider::LinearBar, Slider::TextBoxAbove };
+*/
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SpectrumAnalyser)
 };
