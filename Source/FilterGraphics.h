@@ -262,11 +262,16 @@ public:
         {
             g.setColour (Colours::silver.withAlpha (0.3f));
             auto y = getPositionForDB(roundToInt (mindB + (i * (maxdB - mindB) / dBScaleTickNumber)), graph1.getY(), graph1.getBottom());
-            if ((getPositionForDB(mindB, graph1.getY(), graph1.getBottom()) > y) and (y > getPositionForDB(maxdB, graph1.getY(), graph1.getBottom())))
+            auto textPosition = roundToInt(y + 2);
+            if (graph1.getY() - textPosition < 2)
+            {
+                textPosition = roundToInt(y - 16);
+            }
+            if ((getPositionForDB(mindB, graph1.getY(), graph1.getBottom()) - 2 > y) and (y > getPositionForDB(maxdB, graph1.getY(), graph1.getBottom())))
             {
                 g.drawHorizontalLine (roundToInt (y), graph1.getX(), graph1.getRight());
                 g.setColour (Colours::silver);
-                g.drawFittedText (String (roundToInt (mindB + (i * (maxdB - mindB) / dBScaleTickNumber))) + " dB", graph1.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
+                g.drawFittedText (String (roundToInt (mindB + (i * (maxdB - mindB) / dBScaleTickNumber))) + " dB", graph1.getX() + 3, textPosition, 50, 14, Justification::left, 1);
             }
         }
         
