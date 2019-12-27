@@ -1,19 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="desCmm" name="PAF" projectType="audioplug" jucerVersion="5.4.3"
+<JUCERPROJECT id="desCmm" name="PAF" projectType="audioplug" jucerVersion="5.4.5"
               companyName="Greg" pluginFormats="buildAU,buildVST3" pluginManufacturerCode="Greg"
               bundleIdentifier="com.Greg.PAF" pluginDesc="PsychoAcoustic Filter for headphones"
-              pluginCode="PafH">
+              pluginCode="PafH" binaryDataNamespace="PAF_Data">
   <MAINGROUP id="y5xGxV" name="PAF">
+    <GROUP id="{2486B2F2-1CA4-B721-7AAF-FEC58F73ED88}" name="Ressources">
+      <FILE id="BV1ARn" name="colour.svg" compile="0" resource="1" file="Resources/colour.svg"
+            xcodeResource="0"/>
+      <FILE id="IbPufL" name="Settings.svg" compile="0" resource="1" file="Resources/Settings.svg"
+            xcodeResource="0"/>
+    </GROUP>
     <GROUP id="{2C466906-77F6-D807-9E39-DB38BE5E79DB}" name="Source">
-      <FILE id="C0zNck" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
       <FILE id="ij6fbT" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
+      <FILE id="C0zNck" name="PluginProcessor.cpp" compile="1" resource="0"
+            file="Source/PluginProcessor.cpp"/>
+      <FILE id="GQK9Vf" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
       <FILE id="nsVhch" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
-      <FILE id="GQK9Vf" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
-      <FILE id="uorfyj" name="Visualiser.h" compile="0" resource="0" file="Source/Visualiser.h"/>
+      <FILE id="zQFzGk" name="FilterGraphics.h" compile="0" resource="0"
+            file="Source/FilterGraphics.h"/>
+      <FILE id="vwInwK" name="SpectrumAnalyser.h" compile="0" resource="0"
+            file="Source/SpectrumAnalyser.h"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>

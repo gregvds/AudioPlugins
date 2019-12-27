@@ -32,7 +32,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
     activeStateToggleButton.setClickingTogglesState(true);
     addAndMakeVisible(activeStateToggleButton);
-    
+        
     guiLayoutMenu.addItem("Plugin only", 1);
     guiLayoutMenu.addItem("+ Diagrams", 2);
     guiLayoutMenu.addItem("+ Spectrum", 3);
@@ -44,16 +44,11 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     addAndMakeVisible(guiLayoutMenu);
 
     crossFeedMenu.setEditableText(true);
-    crossFeedMenu.addSectionHeading("Default presets");
     crossFeedMenu.addItem("Full", 1);
     crossFeedMenu.addItem("Medium", 2);
     crossFeedMenu.addItem("Light", 3);
     crossFeedMenu.addItem("Pure Haas", 4);
     crossFeedMenu.setSelectedId(2);
-    crossFeedMenu.addSeparator();
-    crossFeedMenu.addSectionHeading("User presets");
-    crossFeedMenu.addItem("Save...", 5);
-    //crossFeedMenu.setItemEnabled(5, true);
     crossFeedMenu.setJustificationType(Justification::centred);
     crossFeedMenu.addListener(this);
     crossFeedMenu.setTooltip(TRANS ("Global intensity settings"));
@@ -82,7 +77,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     frequencySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     frequencySlider.setTextValueSuffix(" Hz");
-    frequencySlider.setRange(400.0f, 1000.0f);
+    frequencySlider.setRange(300.0f, 1000.0f);
     frequencySlider.setSkewFactorFromMidPoint(600.0f);
     frequencySlider.onValueChange = [this] {filterGraphics.freqs[0] = frequencySlider.getValue();
                                             filterGraphics.freqs[1] = frequencySlider.getValue();
@@ -321,28 +316,64 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
 {
     if (comboBox == &crossFeedMenu)
     {
-        auto filterIntensityIndex = crossFeedMenu.getSelectedId() - 1;
-        auto filterIntensityName = crossFeedMenu.getItemText(filterIntensityIndex);
-        //DBG("filterIntensityName: " + filterIntensityName);
-        if ( filterIntensityName != "Save..." and settingsDictionnary.find(filterIntensityName) != settingsDictionnary.end() )
+        // This code intends to save a newly named preset.
+        // Currently, it works only when the edition is based from first combobox setting (Full)
+        // If a new setting is attemptedly recorded when the combobox is on alother element,
+        // The new preset is lot and Full is choosen again. This is not known why...
+        auto comboboxText = crossFeedMenu.getText();
+        auto itemsNumber = crossFeedMenu.getNumItems();
+        //DBG("comboboxText: " << comboboxText);
+        //DBG("number of items, selected ID as value: " << itemsNumber << ", " << crossFeedMenu.getSelectedIdAsValue().toString());
+
+        // If text content is unknown, it's a New setting that has to be saved
+        if (comboboxText != "")
         {
-            delaySlider.setValue(settingsDictionnary[filterIntensityName][0]);
-            frequencySlider.setValue(settingsDictionnary[filterIntensityName][1]);
-            separationSlider.setValue(settingsDictionnary[filterIntensityName][2]);
-            qSlider.setValue(settingsDictionnary[filterIntensityName][3]);
-            directGainSlider.setValue(settingsDictionnary[filterIntensityName][4]);
-            xfeedGainSlider.setValue(settingsDictionnary[filterIntensityName][5]);
-        }
-        else
+            if (settingsDictionnary.find(comboboxText) == settingsDictionnary.end())
+            {
+                /*
+                DBG("====== A new unknown text =======");
+                for (int i = 0; i < crossFeedMenu.getNumItems(); ++i)
+                {
+                    DBG("Label, Index, i: " << crossFeedMenu.getItemText(i) << ", " << crossFeedMenu.indexOfItemId(i) << ", " << i);
+                }
+                */
+                crossFeedMenu.addItem(comboboxText, itemsNumber + 1);
+                settingsDictionnary[comboboxText] = {(float) delaySlider.getValue() ,
+                                                     (float) frequencySlider.getValue() ,
+                                                     (float) separationSlider.getValue() ,
+                                                     (float) qSlider.getValue() ,
+                                                     (float) directGainSlider.getValue() ,
+                                                     (float) xfeedGainSlider.getValue()};
+                crossFeedMenu.setSelectedId(crossFeedMenu.getNumItems());
+                /*
+                for (int i = 0; i < crossFeedMenu.getNumItems(); ++i)
+                {
+                    DBG("Label, Index, i: " << crossFeedMenu.getItemText(i) << ", " << crossFeedMenu.indexOfItemId(i) << ", " << i);
+                }
+                */
+            }
+            else
+            {
+                delaySlider.setValue(settingsDictionnary[comboboxText][0]);
+                frequencySlider.setValue(settingsDictionnary[comboboxText][1]);
+                separationSlider.setValue(settingsDictionnary[comboboxText][2]);
+                qSlider.setValue(settingsDictionnary[comboboxText][3]);
+                directGainSlider.setValue(settingsDictionnary[comboboxText][4]);
+                xfeedGainSlider.setValue(settingsDictionnary[comboboxText][5]);
+                if (comboboxText == "Pure Haas")
+                {
+                    frequencySlider.setEnabled(false);
+                    qSlider.setEnabled(false);
+                }
+                else
+                {
+                    frequencySlider.setEnabled(true);
+                    qSlider.setEnabled(true);
+                }
+            }
+        } else
         {
-            // Modify text of item with the edited text of the combobox (don't know how to have this)
-            // add new text entry into settingsDictionnary with all the sliders current values
-            // add a new Save... entry into the combobox
-            // set the combobox to the new text entry
-            
-            crossFeedMenu.showEditor();
-            String newLabel = crossFeedMenu.getText();
-            DBG("newLabel: " + newLabel);
+            crossFeedMenu.setSelectedId(0);
             
         }
     }

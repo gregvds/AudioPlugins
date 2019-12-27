@@ -87,10 +87,11 @@ public:
         addAndMakeVisible(maxPhaseEditor);
         
         // Combobox for frequency scale choice
-        frequencyScaleTypeMenu.addItem("type 1", 1);
-        frequencyScaleTypeMenu.addItem("type 2", 2);
-        frequencyScaleTypeMenu.addItem("type 3", 3);
-        frequencyScaleTypeMenu.setSelectedId(1);
+        frequencyScaleTypeMenu.addItem("type 1", 3);
+        frequencyScaleTypeMenu.addItem("type 2", 1);
+        frequencyScaleTypeMenu.addItem("type 3", 2);
+        frequencyScaleTypeMenu.addItem("type 4", 4);
+        frequencyScaleTypeMenu.setSelectedId(4);
         frequencyScaleTypeMenu.setJustificationType(Justification::centred);
         //frequencyScaleTypeMenu.addListener(this);
         frequencyScaleTypeMenu.onChange = [this] {repaint(); };
@@ -268,6 +269,7 @@ public:
                 g.drawFittedText (String (roundToInt (mindB + (i * (maxdB - mindB) / dBScaleTickNumber))) + " dB", graph1.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
             }
         }
+        
         g.setColour (Colours::silver.withAlpha (0.6f));
         auto y = getPositionForDB(0.0f, graph1.getY(), graph1.getBottom());
         g.drawHorizontalLine (roundToInt (y), graph1.getX(), graph1.getRight());
@@ -322,11 +324,17 @@ private:
     
     void mouseDown (const MouseEvent& e) override
     {
-        DBG("Mouse down...");
+        //DBG("Mouse down...");
+        mouseDownX = e.position.getX();
+        mouseDownY = e.position.getY();
+        graph1DBRange = maxdB - mindB;
+        graph2PhaseRange = maxPhase - minPhase;
     }
     
     void mouseMove (const MouseEvent& e) override
     {
+        // Hereunder we only change the dragging booleans just to identify what's
+        // currently attempted to be modified by the mousemove
         if (!graph1.contains (e.x, e.y) and !graph2.contains (e.x, e.y))
         {
             return;
@@ -344,6 +352,11 @@ private:
                 draggingCurve = -1;
                 draggingGain  = false;
                 draggingPhase = false;
+                
+                draggingMinDB = false;
+                draggingMaxDb = false;
+                draggingMinPhase = false;
+                draggingMaxPhase = false;
 
                 setMouseCursor (MouseCursor (MouseCursor::LeftRightResizeCursor));
                 repaint (graph1);
@@ -359,6 +372,11 @@ private:
                 draggingGain  = false;
                 draggingPhase = false;
                 
+                draggingMinDB = false;
+                draggingMaxDb = false;
+                draggingMinPhase = false;
+                draggingMaxPhase = false;
+
                 setMouseCursor (MouseCursor (MouseCursor::LeftRightResizeCursor));
                 repaint (graph1);
                 repaint (graph2);
@@ -368,6 +386,7 @@ private:
             else if (graph1.contains(e.x, e.y))
             {
                 draggingCurve = isOnCurve(e, clickRadius);
+                // If we touch a curve in graph 1
                 if (isPositiveAndBelow(draggingCurve, 2))
                 {
                     draggingFreq  = false;
@@ -375,14 +394,56 @@ private:
                     draggingGain  = true;
                     draggingPhase = false;
                     
+                    draggingMinDB = false;
+                    draggingMaxDb = false;
+                    draggingMinPhase = false;
+                    draggingMaxPhase = false;
+
                     setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
                     repaint (graph1);
                     return;
+                }
+                else
+                {
+                    //DBG("Dragging nothing in graph1");
+                    if (isOnPositiveRange(e))
+                    {
+                        draggingFreq  = false;
+                        draggingQ     = false;
+                        draggingGain  = false;
+                        draggingPhase = false;
+
+                        draggingMinDB = false;
+                        draggingMaxDb = true;
+                        draggingMinPhase = false;
+                        draggingMaxPhase = false;
+
+                        setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
+                        repaint (graph1);
+                        return;
+                    }
+                    if (isOnNegativeRange(e))
+                    {
+                        draggingFreq  = false;
+                        draggingQ     = false;
+                        draggingGain  = false;
+                        draggingPhase = false;
+
+                        draggingMinDB = true;
+                        draggingMaxDb = false;
+                        draggingMinPhase = false;
+                        draggingMaxPhase = false;
+
+                        setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
+                        repaint (graph1);
+                        return;
+                    }
                 }
             }
             else if (graph2.contains(e.x, e.y))
             {
                 draggingCurve = isOnCurve(e, clickRadius);
+                // if we touch a curve in graph 2
                 if (draggingCurve == 2)
                 {
                     draggingFreq  = false;
@@ -390,9 +451,50 @@ private:
                     draggingGain  = false;
                     draggingPhase = true;
                     
+                    draggingMinDB = false;
+                    draggingMaxDb = false;
+                    draggingMinPhase = false;
+                    draggingMaxPhase = false;
+
                     setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
                     repaint (graph2);
                     return;
+                }
+                else
+                {
+                    //DBG("Dragging nothing in graph2");
+                    if (isOnPositiveRange(e))
+                    {
+                        draggingFreq  = false;
+                        draggingQ     = false;
+                        draggingGain  = false;
+                        draggingPhase = false;
+
+                        draggingMinDB = false;
+                        draggingMaxDb = false;
+                        draggingMinPhase = false;
+                        draggingMaxPhase = true;
+
+                        setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
+                        repaint (graph2);
+                        return;
+                    }
+                    if (isOnNegativeRange(e))
+                    {
+                        draggingFreq  = false;
+                        draggingQ     = false;
+                        draggingGain  = false;
+                        draggingPhase = false;
+
+                        draggingMinDB = false;
+                        draggingMaxDb = false;
+                        draggingMinPhase = true;
+                        draggingMaxPhase = false;
+
+                        setMouseCursor (MouseCursor (MouseCursor::UpDownResizeCursor));
+                        repaint (graph2);
+                        return;
+                    }
                 }
             }
         }
@@ -401,6 +503,12 @@ private:
         draggingCurve = -1;
         draggingGain  = false;
         draggingPhase = false;
+        
+        draggingMinDB = false;
+        draggingMaxDb = false;
+        draggingMinPhase = false;
+        draggingMaxPhase = false;
+        
         setMouseCursor (MouseCursor (MouseCursor::NormalCursor));
         repaint (graph1);
         repaint (graph2);
@@ -408,6 +516,7 @@ private:
     
     void mouseDrag (const MouseEvent& e) override
     {
+        //DBG("mouse drag...");
         auto posX = (e.position.getX() - graph1.getX()) / graph1.getWidth();
         auto posY = e.position.getY();
         
@@ -431,9 +540,9 @@ private:
             {
                 auto posFreq     = getPositionForFrequency (float (freqs[0]));
                 
-                DBG("posX: " << posX);
-                DBG("posFreq: " << posFreq);
-                DBG("Q: " << 0.5*(freqs[0] / (freqs[0] - getFrequencyForPosition(posX))));
+                //DBG("posX: " << posX);
+                //DBG("posFreq: " << posFreq);
+                //DBG("Q: " << 0.5*(freqs[0] / (freqs[0] - getFrequencyForPosition(posX))));
                 
                 // If adjusting Q from its low limit
                 if (posX < posFreq)
@@ -478,11 +587,35 @@ private:
                 delaySlider->setValue(getPhaseForPosition(posY, graph2.getY(), graph2.getBottom()));
             }
         }
+        if (draggingMinDB)
+        {
+            auto newMinDB = maxdB - ((graph1DBRange) / ((graph1.getY() - posY)/(graph1.getY() - mouseDownY)));
+            if (newMinDB >= minDBEditor.getRange().getStart())
+                minDBEditor.setValue(newMinDB);
+        }
+        if (draggingMaxDb)
+        {
+            auto newMaxDB = mindB + ((graph1DBRange) / ((posY - graph1.getBottom())/(mouseDownY - graph1.getBottom())));
+            if (newMaxDB <= maxDBEditor.getRange().getEnd())
+                maxDBEditor.setValue(newMaxDB);
+        }
+        if (draggingMinPhase)
+        {
+            auto newMinPhase = maxPhase - ((graph2PhaseRange) / ((graph2.getY() - posY)/(graph2.getY() - mouseDownY)));
+            if (newMinPhase >= minPhaseEditor.getRange().getStart())
+                minPhaseEditor.setValue(newMinPhase);
+        }
+        if (draggingMaxPhase)
+        {
+            auto newMaxPhase = minPhase + ((graph2PhaseRange) / ((posY - graph2.getBottom())/(mouseDownY -graph2.getBottom())));
+            if (newMaxPhase <= maxPhaseEditor.getRange().getEnd())
+                maxPhaseEditor.setValue(newMaxPhase);
+        }
     }
     
     void mouseDoubleClick (const MouseEvent& e) override
     {
-        DBG("Mouse double clic...");
+        //DBG("Mouse double clic...");
     }
     
     int isOnCurve(const MouseEvent& e, int clickRadius)
@@ -511,6 +644,52 @@ private:
         return -1;
     }
     
+    bool isOnPositiveRange(const MouseEvent& e)
+    {
+        if (graph1.contains(e.x, e.y))
+        {
+            float positionSearched = e.position.getY();
+            float zeroPosition = getPositionForGain(Decibels::decibelsToGain(0.0f), graph1.getY(), graph1.getBottom());
+            if (zeroPosition - positionSearched > clickRadius)
+                return true;
+            else
+                return false;
+        }
+        else if (graph2.contains(e.x, e.y))
+        {
+            float positionSearched = e.position.getY();
+            float zeroPosition = getPositionForPhase(0.0f, graph2.getY(), graph2.getBottom());
+            if (zeroPosition - positionSearched > clickRadius)
+                return true;
+            else
+                return false;
+        }
+        return false;
+    }
+
+    bool isOnNegativeRange(const MouseEvent& e)
+    {
+        if (graph1.contains(e.x, e.y))
+        {
+            float positionSearched = e.position.getY();
+            float zeroPosition = getPositionForGain(Decibels::decibelsToGain(0.0f), graph1.getY(), graph1.getBottom());
+            if (positionSearched - zeroPosition > clickRadius)
+                return true;
+            else
+                return false;
+        }
+        else if (graph2.contains(e.x, e.y))
+        {
+            float positionSearched = e.position.getY();
+            float zeroPosition = getPositionForPhase(0.0f, graph2.getY(), graph2.getBottom());
+            if (positionSearched - zeroPosition > clickRadius)
+                return true;
+            else
+                return false;
+        }
+        return false;
+    }
+
     Slider* getSlider(String name)
     {
         if (childrenOfGUI.size() == 0)
@@ -555,13 +734,11 @@ private:
     
     float getFrequencyForPosition (float pos)
     {
-        //return 20.0f * std::pow (2.0f, pos * 10.0f);
         return 20.0f * std::pow (10.0f, 3.0f * pos);
     }
     
     float getPositionForFrequency (float freq)
     {
-        //return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
         return (std::log10 (freq / 20.0f) / 3.0f);
     }
     
@@ -656,28 +833,42 @@ private:
     
     float minFreq      = 20.0f;
     float maxFreq      = 20000.0f;
-    float frequencies [3] [26] = {{27.5f, 55.0f, 110.0f, 220.0f, 440.0f, 880.0f, 1760.0f, 3320.0f, 6640.0f, 13280.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f,                                   22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
+    float frequencies [4] [26] = {{20.0f, 40.0f, 80.0f, 160.0f, 320.0f, 640.0f, 1280.0f, 2560.0f, 5120.0f, 10240.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f,                                                     22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
                                   {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
+                                  {27.5f, 55.0f, 110.0f, 220.0f, 440.0f, 880.0f, 1760.0f, 3520.0f, 7040.0f, 14080.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
                                   {30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f, 90.0f, 100.0f, 200.0f, 300.0f, 400.0f, 500.0f, 600.0f, 700.0f, 800.0f, 900.0f, 1000.0f, 2000.0f, 3000.0f, 4000.0f, 5000.0f, 6000.0f, 7000.0f, 8000.0f, 9000.0f, 10000.0f}};
 
     float mindB        = -10.0f;
     float maxdB        = 10.0f;
+    float graph1DBRange = maxdB - mindB;
     int   dBScaleTickNumber = 5;
     
     float minPhase     = -500.0f;
     float maxPhase     = 500.0f;
+    float graph2PhaseRange = maxPhase - minPhase;
     int   phaseScaleTickNumber = 9;
     
     float lowFreqForQ  = 20.0f;
     float highFreqForQ = 20000.0f;
     float qGraphicalAdjustmentFactor = 0.4;
+    
+    float mouseDownX;
+    float mouseDownY;
 
+    // Dragging elements in diagrams
     int  clickRadius   = 4;
     bool draggingFreq  = false;
     bool draggingQ     = false;
     int  draggingCurve = -1;
     bool draggingGain  = false;
     bool draggingPhase = false;
+    
+    // Dragging in diagrams themselves to modify their min and max in y (dB range diagram 1, phase range diagram 2) first
+    // TBD: later dragging could modify also the min and max in x (frequency range in both diagram)
+    bool draggingMinDB = false;
+    bool draggingMaxDb = false;
+    bool draggingMinPhase = false;
+    bool draggingMaxPhase = false;
     
     Rectangle<int> bounds;
     Rectangle<int> fieldBar;

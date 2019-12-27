@@ -18,7 +18,7 @@ static Colour outColour = Colour(0xFFe5e27e);
 /**
  Classes to contain look and feel customizations for different types of sliders
  */
-/*
+
 class LinearBarLookAndFeel2 : public LookAndFeel_V4,
                              public Component
 {
@@ -29,7 +29,7 @@ public:
         LookAndFeel_V4::setColour(Slider::textBoxTextColourId, Colours::silver);
     }
 };
-*/
+
 //==============================================================================
 /**
  */
@@ -43,14 +43,40 @@ public:
     */
     SpectrumAnalyser()
         : forwardFFT (fftOrder),
-          window (fftSize, dsp::WindowingFunction<float>::blackman )
+          window (fftSize, dsp::WindowingFunction<float>::rectangular )
     {
 
         startTimerHz (30);
         setOpaque (true);
         drawingArea = getLocalBounds();
         
-        // Combobox for frequency scale choice
+        // stuff once and for all the scopeDataFreqs references for spectrum plot
+        for (int i = 0; i < scopeSize; ++i)
+        {
+            scopeDataFreqs[i] = fftFrequencyStep * (float) i/var2;
+        }
+        
+        // editable fields
+        minDBEditor.setRange (-100.0f, -60.0f);
+        minDBEditor.setValue(mindB);
+        minDBEditor.setNumDecimalPlacesToDisplay(1);
+        minDBEditor.setTextValueSuffix(" dB");
+        minDBEditor.setTooltip("Min dB displayed");
+        minDBEditor.setLookAndFeel(&linearBarLookAndFeel2);
+        minDBEditor.onValueChange = [this] {mindB = minDBEditor.getValue(); repaint(); };
+        addAndMakeVisible(minDBEditor);
+
+        maxDBEditor.setRange (-20.0f, 0.0f);
+        maxDBEditor.setValue(maxdB);
+        maxDBEditor.setNumDecimalPlacesToDisplay(1);
+        maxDBEditor.setTextValueSuffix(" dB");
+        maxDBEditor.setTooltip("Max dB displayed");
+        maxDBEditor.setLookAndFeel(&linearBarLookAndFeel2);
+        maxDBEditor.onValueChange = [this] {maxdB = maxDBEditor.getValue(); repaint(); };
+        addAndMakeVisible(maxDBEditor);
+
+        
+        // Combobox for FFT Window type choice
         fftWindowTypeMenu.addItem("hann", 1);
         fftWindowTypeMenu.addItem("hamming", 2);
         fftWindowTypeMenu.addItem("blackman", 3);
@@ -58,44 +84,21 @@ public:
         fftWindowTypeMenu.addItem("triangular", 5);
         fftWindowTypeMenu.setSelectedId(1);
         fftWindowTypeMenu.setJustificationType(Justification::centred);
-        //frequencyScaleTypeMenu.addListener(this);
         fftWindowTypeMenu.onChange = [this] {repaint(); };
         fftWindowTypeMenu.setTooltip(TRANS ("FFT Window function choice"));
-        addAndMakeVisible(fftWindowTypeMenu);
+        //addAndMakeVisible(fftWindowTypeMenu);
         
-/*
-        // editable fields
-        skewVar1.setRange (0.0f, 1.0f);
-        skewVar1.setValue(var1);
-        skewVar1.setNumDecimalPlacesToDisplay(3);
-        skewVar1.setTextValueSuffix(" bool");
-        skewVar1.setTooltip("Skewing variable 1");
-        skewVar1.setLookAndFeel(&linearBarLookAndFeel2);
-        skewVar1.onValueChange = [this] {var1 = skewVar1.getValue(); };
-        addAndMakeVisible(skewVar1);
+        // Combobox for frequency scale choice
+        frequencyScaleTypeMenu.addItem("type 1", 3);
+        frequencyScaleTypeMenu.addItem("type 2", 1);
+        frequencyScaleTypeMenu.addItem("type 3", 2);
+        frequencyScaleTypeMenu.addItem("type 4", 4);
+        frequencyScaleTypeMenu.setSelectedId(3);
+        frequencyScaleTypeMenu.setJustificationType(Justification::centred);
+        frequencyScaleTypeMenu.onChange = [this] {repaint(); };
+        frequencyScaleTypeMenu.setTooltip(TRANS ("Frequency scale choice"));
+        addAndMakeVisible(frequencyScaleTypeMenu);
 
-        // editable fields
-        skewVar2.setRange (0.50f, 2.0f);
-        skewVar2.setValue(var2);
-        skewVar2.setNumDecimalPlacesToDisplay(3);
-        skewVar2.setTextValueSuffix(" ");
-        skewVar2.setTooltip("Skewing variable 2");
-        skewVar2.setLookAndFeel(&linearBarLookAndFeel2);
-        skewVar2.onValueChange = [this] {var2 = skewVar2.getValue(); };
-        addAndMakeVisible(skewVar2);
-
-        // editable fields
-        skewVar3.setRange (0.5f, 2.0f);
-        skewVar3.setValue(var3);
-        skewVar3.setNumDecimalPlacesToDisplay(3);
-        skewVar3.setTextValueSuffix(" ");
-        skewVar3.setTooltip("Skewing variable 3");
-        skewVar3.setLookAndFeel(&linearBarLookAndFeel2);
-        skewVar3.onValueChange = [this] {var3 = skewVar3.getValue(); };
-        addAndMakeVisible(skewVar3);
-*/
-        
-        
         
     }
     
@@ -188,46 +191,9 @@ public:
     {
         window.multiplyWithWindowingTable (fftData, fftSize);      // [1]
         forwardFFT.performFrequencyOnlyForwardTransform (fftData); // [2]
-        //DBG("Frequency step: " << (float) mSampleRate / ((float) fftSize / 2.0f));
         for (int i = 0; i < scopeSize; ++i)                        // [3] from 0 to 1023
         {
-            // for these 1024 steps, we need to go and pick data in a log10 way so as it renders correctly on the diagram in the end
-            // But we don't know how the frequencies are laid out in the fftData in the first hand...
-            auto fftDataIndex = i;
-            if (var1 < 0.5f)
-            {
-                /* This original proposition does not do it properly...
-                */
-                auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - i / (float) scopeSize) * 0.2f);
-                fftDataIndex = jlimit (0,
-                                            fftSize / 2,
-                                            (int) (skewedProportionX * fftSize / 2));
-            }
-            else
-            {
-                /* And a simple geometric proportion does not do it either...
-                */
-                fftDataIndex = jlimit (0,
-                                            fftSize / 2,
-                                            (int) ((float)i/var3));
-            
-            }
-            
-            auto level = jmap (
-                               jlimit (mindB,
-                                       maxdB,
-                                       Decibels::gainToDecibels (fftData[fftDataIndex])
-                                       - Decibels::gainToDecibels ((float) fftSize)
-                                       ),
-                               mindB,
-                               maxdB,
-                               0.0f,
-                               1.0f);
-            scopeData[i] = level;                                  // [4]
-            scopeDataFreqs[i] = ((float) mSampleRate / ((float) fftSize / 2.0f) ) * (float) i/var2;
-            //DBG("i: " << i);
-            //DBG("scopeDataFreqs[i]: " << scopeDataFreqs[i]);
-            //DBG("scopeData[i]: " << scopeData[i]);
+            scopeData[i] = getLevelFromFFT(getFFTDataIndex(fftSize, i), fftSize);
         }
     }
 /*
@@ -247,19 +213,7 @@ public:
                 
         for (int i = 0; i < scopeSize; i++)
         {
-            float x1 = x;
-            if (var1 < 0.5f)
-            {
-                x1 = (float) jmap ((float) i,                                  0.0f, (float) scopeSize, 3.0f, (float) width + 3.0f);
-            }
-            else
-            {
-                //DBG("Freq: " << scopeDataFreqs[i]);
-                //DBG("Position: " << getPositionForFrequency(scopeDataFreqs[i]));
-                x1 = (float) jmap (getPositionForFrequency(scopeDataFreqs[i]), 0.0f,   1.0f,            3.0f, (float) width + 3.0f) + 1.0f;
-                //DBG("x1: " << x1);
-            }
-            //DBG("x1: " << x1);
+            float x1 = (float) jmap (getPositionForFrequency(scopeDataFreqs[i]), 0.0f,   1.0f,            3.0f, (float) width + 3.0f) + 1.0f;
             float y1 = jmap (jlimit(0.0f, 1.0f, scopeData[i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
             p.lineTo(x1, y1);
         }
@@ -277,36 +231,37 @@ public:
         fieldBar = bounds.removeFromBottom(TEXTBOXHEIGHT);
         drawingArea = bounds.reduced (3, 3);
         
-        fftWindowTypeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        minDBEditor.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        maxDBEditor.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
         
-        /*
-        skewVar1.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
-        skewVar2.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
-        skewVar3.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH).reduced(3,0));
-        */
+        //fftWindowTypeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        frequencyScaleTypeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        
         drawFrame(g);
 
         // Silver frame around RT spectrum analysis
         g.setFont (12.0f);
         g.setColour (Colours::silver);
         g.drawRoundedRectangle (drawingArea.toFloat(), 5, 2);
-        
+                 
         // Vertical lines for frequency reference
-        //AffineTransform rotationAntiClockwize = AffineTransform::rotation(-MathConstants<float>::halfPi);
-        //rotationAntiClockwize = rotationAntiClockwize.rotation(-MathConstants<float>::halfPi);
-        //AffineTransform rotationClockwize = AffineTransform::rotation(MathConstants<float>::halfPi);
-        //rotationClockwize = rotationClockwize.rotation(MathConstants<float>::halfPi);
-        for (int i=0; i < frequencies.size() ; ++i) {
-            g.setColour (Colours::silver.withAlpha (0.3f));
-            auto freq = frequencies[i];
-            auto x = drawingArea.getX() + drawingArea.getWidth() * getPositionForFrequency(freq);
-            auto y = drawingArea.getY();
-            g.drawVerticalLine (roundToInt (x), drawingArea.getY(), drawingArea.getBottom());
-            g.setColour (Colours::silver);
-            g.addTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, roundToInt (x + 25), y + 28));
-            g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz", roundToInt (x), y + 3, 50, 15, Justification::right, 1);
-            g.addTransform(AffineTransform::rotation(MathConstants<float>::halfPi, roundToInt (x + 25), y + 28));
+        for (int i=0; i < 26 ; ++i) {
+            auto freq = frequencies[frequencyScaleTypeMenu.getSelectedId() - 1][i];
+            if (minFreq < freq and freq < maxFreq)
+            {
+                g.setColour (Colours::silver.withAlpha (0.3f));
+                auto x1 = drawingArea.getX() + drawingArea.getWidth() * getPositionForFrequency(freq);
+                auto y1 = drawingArea.getY();
+                g.drawVerticalLine (roundToInt (x1), drawingArea.getY(), drawingArea.getBottom());
+                
+                g.setColour (Colours::silver);
+                g.addTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, roundToInt (x1 + 25), y1 + 28));
+                g.drawFittedText ((freq < 1000) ? String (freq) + " Hz" : String (freq / 1000, 1) + " kHz",
+                                  roundToInt (x1), drawingArea.getY() + 3, 50, 15, Justification::right, 1);
+                g.addTransform(AffineTransform::rotation(MathConstants<float>::halfPi, roundToInt (x1 + 25), y1 + 28));
+            }
         }
+        
         // Horizontal lines for dB reference
         for (int i=0; i < 5; i++)
         {
@@ -318,18 +273,47 @@ public:
             g.drawFittedText (String (dB) + " dB", drawingArea.getX() + 3, roundToInt(y + 2), 50, 14, Justification::left, 1);
         }
         
+        g.setColour (Colours::silver.withAlpha (0.6f));
+        auto y2 = getPositionForDB(-96.0f, drawingArea.getY(), drawingArea.getBottom());
+        auto textPosition = roundToInt(y2 + 2);
+        if (drawingArea.getY() - textPosition < 2)
+        {
+            textPosition = roundToInt(y2 - 16);
+        }
+        if (y2 <= drawingArea.getBottom() - 2)
+        {
+            g.drawHorizontalLine (roundToInt (y2), drawingArea.getX(), drawingArea.getRight());
+            g.setColour (Colours::silver);
+            g.drawFittedText (String (-96.0f) + " dB", drawingArea.getX() + 3, textPosition, 50, 14, Justification::left, 1);
+        }
     }
 
     
+    int getFFTDataIndex(int fftSize, int i)
+    {
+        return jlimit (0, fftSize / 2, (int) ((float)i/var3));
+    }
+    
+    float getLevelFromFFT(int fftDataIndex, int fftSize)
+    {
+        return jmap (jlimit (mindB,
+                             maxdB,
+                             Decibels::gainToDecibels (fftData[fftDataIndex])
+                             - Decibels::gainToDecibels ((float) fftSize)
+                             ),
+                     mindB,
+                     maxdB,
+                     0.0f,
+                     1.0f);
+    }
+    
     float getFrequencyForPosition (float pos)
     {
-        //return 20.0f * std::pow (2.0f, pos * 10.0f);
         return 20.0f * std::pow (10.0f, 3.0f * jlimit(0.0f, 1.0f, pos));
     }
     
     float getPositionForFrequency (float freq)
     {
-        //return (std::log (freq / 20.0f) / std::log (2.0f)) / 10.0f;
         return (std::log10 (jlimit(20.0f, 20000.0f, freq) / 20.0f) / 3.0f);
     }
 
@@ -347,6 +331,12 @@ public:
     {
         return jmap (pos, bottom, top, mindB, maxdB);
     }
+    
+    float getPositionForDB (float dB, float top, float bottom)
+    {
+        return jmap (dB, mindB, maxdB, bottom, top);
+    }
+
     
 /*
  declare private member variables required for the FFT implementation as shown below:
@@ -370,32 +360,35 @@ private:
     bool nextFFTBlockReady = false;       // [9]
     float scopeData [scopeSize];          // [10]
     float scopeDataFreqs [scopeSize];
+    float fftFrequencyStep = (float) mSampleRate / ((float) fftSize / 2.0f);
     
     float mindB = -100.0f;
     float maxdB =    0.0f;
+    float graph1DBRange = maxdB - mindB;
+
     
-    Array<float> frequencies = {30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f, 90.0f, 100.0f, 200.0f, 300.0f, 400.0f, 500.0f, 600.0f, 700.0f, 800.0f, 900.0f, 1000.0f, 2000.0f, 3000.0f, 4000.0f, 5000.0f, 6000.0f, 7000.0f, 8000.0f, 9000.0f, 10000.0f};
+    float minFreq      = 20.0f;
+    float maxFreq      = 20000.0f;
+    float frequencies [4] [26] = {{20.0f, 40.0f, 80.0f, 160.0f, 320.0f, 640.0f, 1280.0f, 2560.0f, 5120.0f, 10240.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f,                     22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
+                                  {25.0f, 50.0f, 100.0f, 250.0f, 500.0f, 1000.0f, 2500.0f, 5000.0f, 10000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
+                                  {27.5f, 55.0f, 110.0f, 220.0f, 440.0f, 880.0f, 1760.0f, 3520.0f, 7040.0f, 14080.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f, 22000.0f},
+                                  {30.0f, 40.0f, 50.0f, 60.0f, 70.0f, 80.0f, 90.0f, 100.0f, 200.0f, 300.0f, 400.0f, 500.0f, 600.0f, 700.0f, 800.0f, 900.0f, 1000.0f, 2000.0f, 3000.0f, 4000.0f, 5000.0f, 6000.0f, 7000.0f, 8000.0f, 9000.0f, 10000.0f}};
+
     Rectangle<int> bounds;
     Rectangle<int> fieldBar;
     Rectangle<int> drawingArea;
     
+    LinearBarLookAndFeel2 linearBarLookAndFeel2;
+    
     float var1        = 1.0f;
     float var2        = 2.0f;
     float var3        = 1.0f;
-    /*
-    Array<dsp::WindowingFunction<float>> fftWindowTypeArray = {dsp::WindowingFunction<float>::hann,
-                                                                         dsp::WindowingFunction<float>::hamming,
-                                                                         dsp::WindowingFunction<float>::blackman,
-                                                                         dsp::WindowingFunction<float>::blackmanHarris,
-                                                                         dsp::WindowingFunction<float>::triangular};
-     */
-    //LinearBarLookAndFeel2 linearBarLookAndFeel2;
     
     ComboBox fftWindowTypeMenu;
-/*
-    Slider skewVar1 { Slider::LinearBar, Slider::TextBoxAbove };
-    Slider skewVar2 { Slider::LinearBar, Slider::TextBoxAbove };
-    Slider skewVar3 { Slider::LinearBar, Slider::TextBoxAbove };
-*/
+    ComboBox frequencyScaleTypeMenu;
+    
+    Slider minDBEditor { Slider::LinearBar, Slider::TextBoxAbove };
+    Slider maxDBEditor { Slider::LinearBar, Slider::TextBoxAbove };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SpectrumAnalyser)
 };

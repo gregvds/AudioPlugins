@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"
+#include <algorithm>
 
 
 #define DELAY_ID "delay"
@@ -78,8 +79,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    void fillDelayBuffer(int channel, const int bufferLength, const int delayBufferLength, const float* bufferData);
-    void getFromDelayBuffer(float delayTimeValue, AudioBuffer<float>& buffer, int channel, const int bufferLength, const int delayBufferLength, const float* delayBufferData);
+    void fillDelayBuffer2(const int bufferLength, const int delayBufferLength, AudioBuffer<float>& buffer);
+    void addFromDelayBuffer(float delayTimeValue, AudioBuffer<float>& buffer, const int bufferLength, const int delayBufferLength);
     void updateFilterParameters ();
     
     //==============================================================================
@@ -87,6 +88,7 @@ public:
     AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
     double mSampleRate { 44100 };
+    
 
 private:
     

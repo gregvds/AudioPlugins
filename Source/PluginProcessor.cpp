@@ -55,7 +55,7 @@ AudioProcessorValueTreeState::ParameterLayout GainSliderAudioProcessor::createPa
     std::vector<std::unique_ptr<RangedAudioParameter>> params;
     
     auto delayParams = std::make_unique<AudioParameterFloat> (DELAY_ID, DELAY_NAME, NormalisableRange<float> (0.0f, 320.0f), 100.0f, DELAY_NAME,  AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 0);}, nullptr);
-    auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (400.0f, 1000.0f), 700.0f, FREQ_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
+    auto freqParams = std::make_unique<AudioParameterFloat> (FREQ_ID, FREQ_NAME, NormalisableRange<float> (300.0f, 1000.0f), 700.0f, FREQ_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
     auto qParams = std::make_unique<AudioParameterFloat> (Q_ID, Q_NAME, NormalisableRange<float> (0.1f, 1.0f), 0.5f, Q_NAME, AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 2);}, nullptr);
     auto sepParams = std::make_unique<AudioParameterFloat> (SEP_ID, SEP_NAME, NormalisableRange<float> (-6.0f, 0.0f), -4.0f, SEP_NAME,
         AudioProcessorParameter::genericParameter, [](float value, int){return String (value, 1);}, nullptr);
@@ -170,7 +170,6 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
     
-    // Initialisation of the process duplicators
     iirLowPassFilterDuplicator.reset();
     iirHighPassFilterDuplicator.reset();
     
@@ -178,13 +177,7 @@ void GainSliderAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     
     iirLowPassFilterDuplicator.prepare(spec);
     iirHighPassFilterDuplicator.prepare(spec);
-    
-    // Debug
-    /*
-    DBG("delayBufferSize: " << delayBufferSize); //44228
-    DBG("samplesPerBlock: " << samplesPerBlock); //128
-    DBG("sampleRate: " << sampleRate); //44100
-     */
+
 }
 
 void GainSliderAudioProcessor::releaseResources()
@@ -228,6 +221,7 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     auto* sliderqValue = treeState.getRawParameterValue(Q_ID);
     auto* sliderSepValue = treeState.getRawParameterValue(SEP_ID);
 
+    // Update Crossfeed and Direct IIR filter parameters with new values from GUI
     iirCoefficientsXfeed = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(-1.0f * *sliderSepValue));
     iirCoefficientsDirect = *dsp::IIR::Coefficients<float>::makeLowShelf(mSampleRate, *sliderFreqValue, *sliderqValue, Decibels::decibelsToGain(*sliderSepValue));
     
@@ -238,6 +232,17 @@ void GainSliderAudioProcessor::updateFilterParameters ()
     
     *iirLowPassFilterDuplicator.state = iirCoefficientsXfeed;
     *iirHighPassFilterDuplicator.state = iirCoefficientsDirect;
+    
+    /*
+        DBG("Update Reverb parameters");
+        // Update Reverb parameters with new values from GUI
+        reverbParameters.damping = 0.99f;
+        reverbParameters.width = 0.05f;
+        reverbParameters.wetLevel = 0.02f;
+        reverbParameters.freezeMode = 0.0f;
+        reverbParameters.dryLevel = 0.5f;
+    reverbFilter.setParameters(reverbParameters);
+    */
 }
 
 void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
@@ -252,6 +257,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
+    
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     {
         buffer.clear (i, 0, buffer.getNumSamples());
@@ -265,36 +271,20 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         const int delayBufferLength = mDelayBuffer.getNumSamples();
 
         // We copy the buffer into the filter buffer
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
-        {
-            const float* bufferChannelData = buffer.getReadPointer(channel);
-            mFilterBuffer.copyFrom(channel, 0, bufferChannelData, bufferLength);
-        }
-
+        mFilterBuffer.makeCopyOf(buffer);
+        
         // Do the filtering on the filter buffer for the Crossfeed signal
         //updateFilterParameters();
         dsp::AudioBlock<float> block (mFilterBuffer);
         iirLowPassFilterDuplicator.process(dsp::ProcessContextReplacing<float> (block));
 
         // Adjust gain on the Filter buffer for separation (and for debug too)
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
-        {
-            auto* filteredChannelData = mFilterBuffer.getWritePointer (channel);
-            auto* sepGainValue = treeState.getRawParameterValue(SEP_ID);
-            auto* xGainValue = treeState.getRawParameterValue(XGAIN_ID);
-            for (int sample = 0; sample < mFilterBuffer.getNumSamples(); ++sample)
-            {
-                filteredChannelData[sample] = mFilterBuffer.getSample(channel, sample) * Decibels::decibelsToGain(2.0 * *sepGainValue) * Decibels::decibelsToGain(*xGainValue);
-            }
-        }
-
+        auto* sepGainValue = treeState.getRawParameterValue(SEP_ID);
+        auto* xGainValue = treeState.getRawParameterValue(XGAIN_ID);
+        mFilterBuffer.applyGain(Decibels::decibelsToGain(2.0 * *sepGainValue) * Decibels::decibelsToGain(*xGainValue));
+        
         // We copy the filter buffer into the delay Buffer
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
-        {
-            // Here we cross the channels with getTotalNumInputChannels()-1-channel 0 -> 1, 1 -> 0!
-            const float* filterChannelData = mFilterBuffer.getReadPointer(getTotalNumInputChannels()-1-channel);
-            fillDelayBuffer(channel, bufferLength, delayBufferLength, filterChannelData);
-        }
+        fillDelayBuffer2(bufferLength, delayBufferLength, mFilterBuffer);
 
         // Do the filtering on the main buffer for the direct signal
         //updateFilterParameters();
@@ -302,28 +292,18 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         iirHighPassFilterDuplicator.process(dsp::ProcessContextReplacing<float> (block2));
 
         // Gain adjustment to the main signal
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
-        {
-            auto* DirectChannelData = buffer.getWritePointer (channel);
-            auto* dGainValue = treeState.getRawParameterValue(DGAIN_ID);
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-            {
-                DirectChannelData[sample] = buffer.getSample(channel, sample) * Decibels::decibelsToGain(*dGainValue);
-            }
-        }
+        auto* dGainValue = treeState.getRawParameterValue(DGAIN_ID);
+        buffer.applyGain(Decibels::decibelsToGain(*dGainValue));
 
         // We add the delayBuffer to the main buffer
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
-        {
-            const float* delayChannelData = mDelayBuffer.getReadPointer(channel);
-            auto sliderDelayValue = treeState.getRawParameterValue(DELAY_ID);
-            getFromDelayBuffer(*sliderDelayValue, buffer, channel, bufferLength, delayBufferLength, delayChannelData);
-        }
+        auto sliderDelayValue = treeState.getRawParameterValue(DELAY_ID);
+        addFromDelayBuffer(*sliderDelayValue, buffer, bufferLength, delayBufferLength);
 
         //Update write position
         mWritePosition += buffer.getNumSamples();
         mWritePosition %= mDelayBuffer.getNumSamples();
     }
+        
     
     // If spectrum is displayed, we push the output buffer into its fifo
     auto* spectrumState = treeState.getRawParameterValue(SPECTR_ID);
@@ -336,39 +316,48 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
 //==============================================================================
 
 //==============================================================================
-void GainSliderAudioProcessor::fillDelayBuffer(int channel, const int bufferLength, const int delayBufferLength, const float* bufferData)
+void GainSliderAudioProcessor::fillDelayBuffer2(const int bufferLength, const int delayBufferLength, AudioBuffer<float>& buffer)
 {
     const int bufferRemaining = delayBufferLength - mWritePosition;
-    //Copy data from main buffer to delay buffer
+    
+    //Copy data from main buffer to delay buffer, and cross the channels
     if (bufferLength <= bufferRemaining)
     {
-        mDelayBuffer.copyFromWithRamp(channel, mWritePosition, bufferData, bufferLength, 1.0, 1.0);
+        mDelayBuffer.copyFrom(0, mWritePosition, buffer, 1, 0, bufferLength);
+        mDelayBuffer.copyFrom(1, mWritePosition, buffer, 0, 0, bufferLength);
     }
     else
     {
-        mDelayBuffer.copyFromWithRamp(channel, mWritePosition, bufferData, bufferRemaining, 1.0, 1.0);
-        mDelayBuffer.copyFromWithRamp(channel, 0, bufferData, bufferLength - bufferRemaining, 1.0, 1.0);
+        mDelayBuffer.copyFrom(0, mWritePosition, buffer, 1, 0, bufferRemaining);
+        mDelayBuffer.copyFrom(0, 0, buffer, 1, bufferRemaining, bufferLength - bufferRemaining);
+        mDelayBuffer.copyFrom(1, mWritePosition, buffer, 0, 0, bufferRemaining);
+        mDelayBuffer.copyFrom(1, 0, buffer, 0, bufferRemaining, bufferLength - bufferRemaining);
     }
 }
 
 //==============================================================================
-void GainSliderAudioProcessor::getFromDelayBuffer(float delayTimeValue, AudioBuffer<float>& buffer, int channel, const int bufferLength, const int delayBufferLength, const float* delayBufferData)
+void GainSliderAudioProcessor::addFromDelayBuffer(float delayTimeValue, AudioBuffer<float>& buffer, const int bufferLength, const int delayBufferLength)
 {
     // delay time is in microseconds!
     int delaySamples = static_cast<int>(round(mSampleRate * delayTimeValue/1000000.0f));
     const int readPosition = static_cast<int>(( delayBufferLength + mWritePosition - delaySamples )) % delayBufferLength;
     const int bufferRemaining = delayBufferLength - readPosition;
     
+    //Add data from delay Buffer to main buffer
     if (bufferLength <= bufferRemaining)
     {
-        buffer.addFrom(channel, 0, delayBufferData + readPosition, bufferLength);
+        buffer.addFrom(0, 0, mDelayBuffer, 0, readPosition, bufferLength);
+        buffer.addFrom(1, 0, mDelayBuffer, 1, readPosition, bufferLength);
     }
     else
     {
-        buffer.addFrom(channel, 0, delayBufferData + readPosition, bufferRemaining);
-        buffer.addFrom(channel, bufferRemaining, delayBufferData, bufferLength - bufferRemaining);
+        buffer.addFrom(0, 0, mDelayBuffer, 0, readPosition, bufferRemaining);
+        buffer.addFrom(1, 0, mDelayBuffer, 1, readPosition, bufferRemaining);
+        buffer.addFrom(0, bufferRemaining, mDelayBuffer, 0, 0, bufferLength - bufferRemaining);
+        buffer.addFrom(1, bufferRemaining, mDelayBuffer, 1, 0, bufferLength - bufferRemaining);
     }
 }
+
 
 //==============================================================================
 bool GainSliderAudioProcessor::hasEditor() const
