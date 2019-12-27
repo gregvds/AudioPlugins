@@ -48,7 +48,8 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     crossFeedMenu.addItem("Medium", 2);
     crossFeedMenu.addItem("Light", 3);
     crossFeedMenu.addItem("Pure Haas", 4);
-    crossFeedMenu.setSelectedId(2);
+    crossFeedMenu.addItem("Nice", 5);
+    crossFeedMenu.setSelectedId(5);
     crossFeedMenu.setJustificationType(Justification::centred);
     crossFeedMenu.addListener(this);
     crossFeedMenu.setTooltip(TRANS ("Global intensity settings"));
@@ -74,23 +75,39 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     addAndMakeVisible(delayLabel);
     
     frequencySlider.setName("frequencySlider");
-    frequencySlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+    frequencySlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     frequencySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     frequencySlider.setTextValueSuffix(" Hz");
     frequencySlider.setRange(300.0f, 1000.0f);
     frequencySlider.setSkewFactorFromMidPoint(600.0f);
     frequencySlider.onValueChange = [this] {filterGraphics.freqs[0] = frequencySlider.getValue();
-                                            filterGraphics.freqs[1] = frequencySlider.getValue();
                                             filterGraphics.updatePhasesRange();
                                             repaint(); };
-    frequencySlider.setTooltip(TRANS ("Crossfeed cutoff frequency"));
+    frequencySlider.setTooltip(TRANS ("Direct cutoff frequency"));
     addAndMakeVisible(frequencySlider);
-    frequencyLabel.setText("Cutoff frequency", NotificationType::dontSendNotification);
+    frequencyLabel.setText("D Cutoff frequency", NotificationType::dontSendNotification);
     frequencyLabel.setLookAndFeel(&labelLookAndFeel);
     frequencyLabel.attachToComponent(&frequencySlider, false);
     frequencyLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(frequencyLabel);
     
+    xfeedFrequencySlider.setName("xfeedFrequencySlider");
+    xfeedFrequencySlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
+    xfeedFrequencySlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
+    xfeedFrequencySlider.setTextValueSuffix(" Hz");
+    xfeedFrequencySlider.setRange(300.0f, 1000.0f);
+    xfeedFrequencySlider.setSkewFactorFromMidPoint(600.0f);
+    xfeedFrequencySlider.onValueChange = [this] {filterGraphics.freqs[1] = xfeedFrequencySlider.getValue();
+                                            filterGraphics.updatePhasesRange();
+                                            repaint(); };
+    xfeedFrequencySlider.setTooltip(TRANS ("Crossfeed cutoff frequency"));
+    addAndMakeVisible(xfeedFrequencySlider);
+    xfeedFrequencyLabel.setText("X Cutoff frequency", NotificationType::dontSendNotification);
+    xfeedFrequencyLabel.setLookAndFeel(&labelLookAndFeel);
+    xfeedFrequencyLabel.attachToComponent(&xfeedFrequencySlider, false);
+    xfeedFrequencyLabel.setJustificationType(Justification::centredBottom);
+    addAndMakeVisible(xfeedFrequencyLabel);
+
     qSlider.setName("qSlider");
     qSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     qSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
@@ -99,14 +116,30 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     qSlider.setSkewFactorFromMidPoint(0.3f);
     qSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
                                     repaint(); };
-    qSlider.setTooltip(TRANS ("Filter quality"));
+    qSlider.setTooltip(TRANS ("Direct Filter quality"));
     addAndMakeVisible(qSlider);
-    qLabel.setText("Quality", NotificationType::dontSendNotification);
+    qLabel.setText("D Quality", NotificationType::dontSendNotification);
     qLabel.setLookAndFeel(&labelLookAndFeel);
     qLabel.attachToComponent(&qSlider, false);
     qLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(qLabel);
-
+    
+    xfeedQSlider.setName("xfeedQSlider");
+    xfeedQSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+    xfeedQSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
+    xfeedQSlider.setTextValueSuffix(" Q");
+    xfeedQSlider.setRange(0.1f, 1.0f);
+    xfeedQSlider.setSkewFactorFromMidPoint(0.3f);
+    xfeedQSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
+                                    repaint(); };
+    xfeedQSlider.setTooltip(TRANS ("Xfeed Filter quality"));
+    addAndMakeVisible(xfeedQSlider);
+    xfeedQLabel.setText("X Quality", NotificationType::dontSendNotification);
+    xfeedQLabel.setLookAndFeel(&labelLookAndFeel);
+    xfeedQLabel.attachToComponent(&xfeedQSlider, false);
+    xfeedQLabel.setJustificationType(Justification::centredBottom);
+    addAndMakeVisible(xfeedQLabel);
+    
     separationSlider.setName("separationSlider");
     separationSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     separationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
@@ -117,11 +150,28 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
                                              repaint(); };
     separationSlider.setTooltip(TRANS ("Separation between direct and crossfeed signals"));
     addAndMakeVisible(separationSlider);
-    separationLabel.setText("Separation", NotificationType::dontSendNotification);
+    separationLabel.setText("D Separation", NotificationType::dontSendNotification);
     separationLabel.setLookAndFeel(&labelLookAndFeel);
     separationLabel.attachToComponent(&separationSlider, false);
     separationLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(separationLabel);
+
+    xfeedSeparationSlider.setName("xfeedSeparationSlider");
+    xfeedSeparationSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
+    xfeedSeparationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
+    xfeedSeparationSlider.setTextValueSuffix(" dB");
+    xfeedSeparationSlider.setRange(-6.0f, 0.0f);
+    xfeedSeparationSlider.setSkewFactorFromMidPoint(-4.0f);
+    xfeedSeparationSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
+                                             repaint(); };
+    xfeedSeparationSlider.setTooltip(TRANS ("Separation between crossfeed and direct signals"));
+    addAndMakeVisible(xfeedSeparationSlider);
+    xfeedSeparationLabel.setText("X Separation", NotificationType::dontSendNotification);
+    xfeedSeparationLabel.setLookAndFeel(&labelLookAndFeel);
+    xfeedSeparationLabel.attachToComponent(&xfeedSeparationSlider, false);
+    xfeedSeparationLabel.setJustificationType(Justification::centredBottom);
+    addAndMakeVisible(xfeedSeparationLabel);
+
     
     directGainSlider.setName("directGainSlider");
     directGainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
@@ -153,19 +203,27 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     rotaryLookAndFeel1.setColour(Slider::ColourIds::thumbColourId, delayColour);
     rotaryLookAndFeel2.setColour(Slider::ColourIds::thumbColourId, freqColour);
+    rotaryLookAndFeel4.setColour(Slider::ColourIds::thumbColourId, freqColour);
     rotaryLookAndFeel3.setColour(Slider::ColourIds::thumbColourId, bandwidthColour);
+    rotaryLookAndFeel5.setColour(Slider::ColourIds::thumbColourId, bandwidthColour);
     
     delaySlider.setLookAndFeel(&rotaryLookAndFeel1);
     frequencySlider.setLookAndFeel(&rotaryLookAndFeel2);
+    xfeedFrequencySlider.setLookAndFeel(&rotaryLookAndFeel4);
     qSlider.setLookAndFeel(&rotaryLookAndFeel3);
+    xfeedQSlider.setLookAndFeel(&rotaryLookAndFeel5);
     separationSlider.setLookAndFeel(&rotaryLookAndFeel);
+    xfeedSeparationSlider.setLookAndFeel(&rotaryLookAndFeel);
     directGainSlider.setLookAndFeel(&directLookAndFeel);
     xfeedGainSlider.setLookAndFeel(&xfeedLookAndFeel);
     
     delaySliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, DELAY_ID, delaySlider));
     freqSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, FREQ_ID, frequencySlider));
+    xfeedFreqSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, XFREQ_ID, xfeedFrequencySlider));
     qSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, Q_ID, qSlider));
+    xfeedQSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, XQ_ID, xfeedQSlider));
     sepSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, SEP_ID, separationSlider));
+    xfeedSepSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, XSEP_ID, xfeedSeparationSlider));
     directGainSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, DGAIN_ID, directGainSlider));
     xfeedGainSliderAttach.reset (new AudioProcessorValueTreeState::SliderAttachment (valueTreeState, XGAIN_ID, xfeedGainSlider));
     activeStateToggleButtonAttach.reset (new AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, ACTIVE_ID, activeStateToggleButton));
@@ -174,7 +232,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
 
 
     filterGraphics.freqs[0] = frequencySlider.getValue();
-    filterGraphics.freqs[1] = frequencySlider.getValue();
+    filterGraphics.freqs[1] = xfeedFrequencySlider.getValue();
     filterGraphics.gains[0] = xfeedGainSlider.getValue();
     filterGraphics.gains[1] = directGainSlider.getValue();
     filterGraphics.phases[0] = delaySlider.getValue();
@@ -182,10 +240,22 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     addAndMakeVisible(filterGraphics);
     addAndMakeVisible(spectrumAnalyser);
     
+    /*
     settingsDictionnary[String("Full")] = {0.0f , 400.0f , -5.0f, 0.57f, 5.0f, -5.0f};
     settingsDictionnary[String("Medium")] = {94.0f, 700.0f , -4.0f, 0.45f, 4.0f, -4.0f};
     settingsDictionnary[String("Light")] = {67.0f, 400.0f , -3.0f, 0.6f, 3.1f, -3.1f};
     settingsDictionnary[String("Pure Haas")] = {270.0f, 700.0f , 0.0f, 1.0f, 1.0f, -3.0f};
+    */
+    settingsDictionnary[String("Nice")]["delay"] = 122.38f;
+    settingsDictionnary[String("Nice")]["directFreq"] = 647.0f;
+    settingsDictionnary[String("Nice")]["directSep"] = -3.0f;
+    settingsDictionnary[String("Nice")]["directGain"] = 3.7f;
+    settingsDictionnary[String("Nice")]["directQ"] = 0.48f;
+    settingsDictionnary[String("Nice")]["xfeedFreq"] = 647.0f;
+    settingsDictionnary[String("Nice")]["xfeedSep"] = -3.0f;
+    settingsDictionnary[String("Nice")]["xfeedGain"] = -3.2f;
+    settingsDictionnary[String("Nice")]["xfeedQ"] = 0.48f;
+    
     
     /*
     preferencesButton.setButtonText("Preferences");
@@ -245,25 +315,36 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     int sliderSize = topPanel.getWidth()/4;
     
     dials = topPanel.removeFromLeft(sliderSize);
-    slider1 = topPanel.removeFromLeft(sliderSize);
-    slider2 = topPanel.removeFromLeft(sliderSize);
-    slider3 = topPanel.removeFromLeft(sliderSize);
-    
+    directSliders = topPanel.removeFromTop(topPanel.getHeight() / 2);
+    xfeedSliders  = topPanel.removeFromTop(topPanel.getHeight());
+    slider1 = directSliders.removeFromLeft(sliderSize);
+    slider2 = directSliders.removeFromLeft(sliderSize);
+    slider3 = directSliders.removeFromLeft(sliderSize);
+    slider4 = xfeedSliders.removeFromLeft(sliderSize);
+    slider5 = xfeedSliders.removeFromLeft(sliderSize);
+    slider6 = xfeedSliders.removeFromLeft(sliderSize);
+
     int dialSize = dials.getHeight() - 3 * (LABELHEIGHT + TEXTBOXHEIGT);
     
-    delayLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    delaySlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
-    frequencyLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    frequencySlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
     qLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
     qSlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
+    delayLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
+    delaySlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
+    xfeedQLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
+    xfeedQSlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
     
-    separationLabel.setBounds(slider1.removeFromTop(LABELHEIGHT));
-    separationSlider.setBounds(slider1);
-    directGainLabel.setBounds(slider2.removeFromTop(LABELHEIGHT));
-    directGainSlider.setBounds(slider2);
-    xfeedGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
-    xfeedGainSlider.setBounds(slider3);
+    frequencyLabel.setBounds(slider1.removeFromTop(LABELHEIGHT));
+    frequencySlider.setBounds(slider1);
+    xfeedFrequencyLabel.setBounds(slider4.removeFromTop(LABELHEIGHT));
+    xfeedFrequencySlider.setBounds(slider4);
+    separationLabel.setBounds(slider2.removeFromTop(LABELHEIGHT));
+    separationSlider.setBounds(slider2);
+    xfeedSeparationLabel.setBounds(slider5.removeFromTop(LABELHEIGHT));
+    xfeedSeparationSlider.setBounds(slider5);
+    directGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
+    directGainSlider.setBounds(slider3);
+    xfeedGainLabel.setBounds(slider6.removeFromTop(LABELHEIGHT));
+    xfeedGainSlider.setBounds(slider6);
     
     if (guiLayoutMenu.getSelectedId() == 1)
     {
@@ -321,7 +402,7 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
         // If a new setting is attemptedly recorded when the combobox is on alother element,
         // The new preset is lot and Full is choosen again. This is not known why...
         auto comboboxText = crossFeedMenu.getText();
-        auto itemsNumber = crossFeedMenu.getNumItems();
+        //auto itemsNumber = crossFeedMenu.getNumItems();
         //DBG("comboboxText: " << comboboxText);
         //DBG("number of items, selected ID as value: " << itemsNumber << ", " << crossFeedMenu.getSelectedIdAsValue().toString());
 
@@ -336,7 +417,7 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
                 {
                     DBG("Label, Index, i: " << crossFeedMenu.getItemText(i) << ", " << crossFeedMenu.indexOfItemId(i) << ", " << i);
                 }
-                */
+                
                 crossFeedMenu.addItem(comboboxText, itemsNumber + 1);
                 settingsDictionnary[comboboxText] = {(float) delaySlider.getValue() ,
                                                      (float) frequencySlider.getValue() ,
@@ -345,7 +426,7 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
                                                      (float) directGainSlider.getValue() ,
                                                      (float) xfeedGainSlider.getValue()};
                 crossFeedMenu.setSelectedId(crossFeedMenu.getNumItems());
-                /*
+                
                 for (int i = 0; i < crossFeedMenu.getNumItems(); ++i)
                 {
                     DBG("Label, Index, i: " << crossFeedMenu.getItemText(i) << ", " << crossFeedMenu.indexOfItemId(i) << ", " << i);
@@ -354,21 +435,42 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
             }
             else
             {
-                delaySlider.setValue(settingsDictionnary[comboboxText][0]);
-                frequencySlider.setValue(settingsDictionnary[comboboxText][1]);
-                separationSlider.setValue(settingsDictionnary[comboboxText][2]);
-                qSlider.setValue(settingsDictionnary[comboboxText][3]);
-                directGainSlider.setValue(settingsDictionnary[comboboxText][4]);
-                xfeedGainSlider.setValue(settingsDictionnary[comboboxText][5]);
+                /*
+                settingsDictionnary[String("Nice")]["delay"] = 122.38f;
+                settingsDictionnary[String("Nice")]["directFreq"] = 647.0f;
+                settingsDictionnary[String("Nice")]["directSep"] = -3.0f;
+                settingsDictionnary[String("Nice")]["directGain"] = 3.7f;
+                settingsDictionnary[String("Nice")]["directQ"] = 0.48f;
+                settingsDictionnary[String("Nice")]["xfeedFreq"] = 647.0f;
+                settingsDictionnary[String("Nice")]["xfeedSep"] = -3.0f;
+                settingsDictionnary[String("Nice")]["xfeedGain"] = -3.2f;
+                settingsDictionnary[String("Nice")]["xfeedQ"] = 0.48f;
+                */
+                
+                delaySlider.setValue(settingsDictionnary[comboboxText]["delay"]);
+                frequencySlider.setValue(settingsDictionnary[comboboxText]["directFreq"]);
+                xfeedFrequencySlider.setValue(settingsDictionnary[comboboxText]["xfeedFreq"]);
+                separationSlider.setValue(settingsDictionnary[comboboxText]["directSep"]);
+                xfeedSeparationSlider.setValue(settingsDictionnary[comboboxText]["xfeedSep"]);
+                qSlider.setValue(settingsDictionnary[comboboxText]["directQ"]);
+                xfeedQSlider.setValue(settingsDictionnary[comboboxText]["xfeedQ"]);
+                directGainSlider.setValue(settingsDictionnary[comboboxText]["directGain"]);
+                xfeedGainSlider.setValue(settingsDictionnary[comboboxText]["xfeedGain"]);
+                
                 if (comboboxText == "Pure Haas")
                 {
                     frequencySlider.setEnabled(false);
                     qSlider.setEnabled(false);
+                    xfeedFrequencySlider.setEnabled(false);
+                    xfeedQSlider.setEnabled(false);
+
                 }
                 else
                 {
                     frequencySlider.setEnabled(true);
                     qSlider.setEnabled(true);
+                    xfeedFrequencySlider.setEnabled(true);
+                    xfeedQSlider.setEnabled(true);
                 }
             }
         } else

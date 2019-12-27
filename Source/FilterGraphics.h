@@ -148,20 +148,58 @@ public:
         highFreqForQ = cF + ((cF)/(2.0 * q)) * (1.0 + qGraphicalAdjustmentFactor);
         float lFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, lowFreqForQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
         float hFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, highFreqForQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
-        
+
+        float xQ     = getSlider("xfeedQSlider")->getValue();
+        float xCF    = getSlider("xfeedFrequencySlider")->getValue();
+        lowFreqForXQ  = xCF - ((xCF)/(2.0 * xQ)) * (1.0 - qGraphicalAdjustmentFactor);
+        highFreqForXQ = xCF + ((xCF)/(2.0 * xQ)) * (1.0 + qGraphicalAdjustmentFactor);
+        float xLFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, lowFreqForXQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
+        float xHFPos  = jmap(getPositionForFrequency(jlimit(minFreq, maxFreq, highFreqForXQ)), 0.0f, 1.0f, 3.0f, (float) width1 + 6.0f);
+
         float separationTransparency = - getSlider("separationSlider")->getValue()/(getSlider("separationSlider")->getMaximum() - getSlider("separationSlider")->getMinimum());
+        float xSeparationTransparency = - getSlider("xfeedSeparationSlider")->getValue()/(getSlider("xfeedSeparationSlider")->getMaximum() - getSlider("xfeedSeparationSlider")->getMinimum());
         float delayTransparency = getSlider("delaySlider")->getValue()/(getSlider("delaySlider")->getMaximum() - getSlider("delaySlider")->getMinimum());
         
-        // Draw Area on which separation is active
+        std::pair<double*, double*> minMaxDirectGain = std::minmax_element(std::begin(scopeGain[1]), std::end(scopeGain[1]));
+        std::pair<double*, double*> minMaxXfeedGain = std::minmax_element(std::begin(scopeGain[0]), std::end(scopeGain[0]));
+        std::pair<double*, double*> minMaxDirectPhase = std::minmax_element(std::begin(scopePhase[1]), std::end(scopePhase[1]));
+        std::pair<double*, double*> minMaxXfeedPhase = std::minmax_element(std::begin(scopePhase[0]), std::end(scopePhase[0]));
+        
+        DBG("Direct gains  min max: " << *(minMaxDirectGain.first) << ", " << *(minMaxDirectGain.second));
+        DBG("Direct phases min max: " << *(minMaxDirectPhase.first) << ", " << *(minMaxDirectPhase.second));
+        DBG("Xfeed  gains  min max: " << *(minMaxXfeedGain.first) << ", " << *(minMaxXfeedGain.second));
+        DBG("Xfeed  phases min max: " << *(minMaxXfeedPhase.first) << ", " << *(minMaxXfeedPhase.second));
+        
+        float scopeMaxDirectGain = jmap (jlimit(mindB, maxdB, gains[1] + Decibels::gainToDecibels((float)*(minMaxDirectGain.second))), mindB, maxdB, (float) y1 + height1, (float) y1);
+        float scopeMinDirectGain = jmap (jlimit(mindB, maxdB, gains[1] + Decibels::gainToDecibels((float)*(minMaxDirectGain.first))), mindB, maxdB, (float) y1 + height1, (float) y1);
+        float scopeMaxXfeedGain  = jmap (jlimit(mindB, maxdB, gains[0] + Decibels::gainToDecibels((float)*(minMaxXfeedGain.second))), mindB, maxdB, (float) y1 + height1, (float) y1);
+        float scopeMinXfeedGain  = jmap (jlimit(mindB, maxdB, gains[0] + Decibels::gainToDecibels((float)*(minMaxXfeedGain.first))), mindB, maxdB, (float) y1 + height1, (float) y1);
+
+
+        // Draw Area on which separation is active for Direct Curve in Gain diagram
         g.setGradientFill(ColourGradient(separationColour.withAlpha(separationTransparency), 0.0f, y1, Colours::transparentWhite, hFPos, y1, false));
-        g.fillRoundedRectangle(3.0f, y1, hFPos, height1, 5);
-        g.fillRoundedRectangle(3.0f, y2, hFPos, height2, 5);
+        g.fillRoundedRectangle(3.0f, scopeMaxDirectGain, hFPos, std::abs(scopeMaxDirectGain - scopeMinDirectGain), 5);
+        /*
+        g.fillRoundedRectangle(3.0f, getPositionForPhase(*(minMaxDirectPhase.second), y2, y2 + height2), hFPos, std::abs(getPositionForPhase(*(minMaxDirectPhase.second), y2, y2 + height2)-getPositionForPhase(*(minMaxDirectPhase.first), y2, y2 + height2)), 5);
+        */
+        // Draw Area on which separation is active for Xfeed Curve in Gain diagram
+        g.setGradientFill(ColourGradient(separationColour.withAlpha(xSeparationTransparency), 0.0f, y1, Colours::transparentWhite, hFPos, y1, false));
+        g.fillRoundedRectangle(3.0f, scopeMaxXfeedGain, xHFPos, std::abs(scopeMaxXfeedGain - scopeMinXfeedGain), 5);
+        /*
+        g.fillRoundedRectangle(3.0f, getPositionForPhase(*(minMaxXfeedPhase.second), y2, y2 + height2), hFPos, std::abs(getPositionForPhase(*(minMaxXfeedPhase.second), y2, y2 + height2)-getPositionForPhase(*(minMaxXfeedPhase.first), y2, y2 + height2)), 5);
+        */
         
-        // Draw bandwidth based on Q values and frequency of filter(s).
+        // Draw bandwidth based on Q values and frequency of filter(s) for Direct Curve in Gain Diagram.
         g.setColour (bandwidthColour.withAlpha(0.25f));
-        g.fillRoundedRectangle(lFPos, y1, hFPos - lFPos, height1, 5);
-        g.fillRoundedRectangle(lFPos, y2, hFPos - lFPos, height2, 5);
+        g.fillRoundedRectangle(lFPos, scopeMaxDirectGain, hFPos - lFPos, std::abs(scopeMaxDirectGain - scopeMinDirectGain), 5);
         
+        g.fillRoundedRectangle(lFPos, y2, hFPos - lFPos, height2, 5);
+
+        // Draw bandwidth based on Q values and frequency of filter(s) for Xfeed Curve in Gain Diagram.
+        g.fillRoundedRectangle(xLFPos, scopeMaxXfeedGain, xHFPos - xLFPos, std::abs(scopeMaxXfeedGain - scopeMinXfeedGain), 5);
+        
+        g.fillRoundedRectangle(xLFPos, y2, xHFPos - xLFPos, height2, 5);
+
         // Draw xfeed Delay horizontal line
         float delayPosition = getPositionForTime(getSlider("delaySlider")->getValue(), y2, graph2.getBottom());
         Line<float> delayLine = Line<float>(3.0f, delayPosition, (float) width1, delayPosition);
@@ -299,7 +337,7 @@ public:
         g.setColour (Colours::silver);
         g.drawFittedText (String (0.0f) + " µs", graph2.getX() + 3, roundToInt(y2 + 2), 50, 14, Justification::left, 1);
     }
-    
+        
     void updatePhasesRange()
     {
         // Reinitialisation of vars
@@ -855,6 +893,8 @@ private:
     
     float lowFreqForQ  = 20.0f;
     float highFreqForQ = 20000.0f;
+    float lowFreqForXQ  = 20.0f;
+    float highFreqForXQ = 20000.0f;
     float qGraphicalAdjustmentFactor = 0.4;
     
     float mouseDownX;

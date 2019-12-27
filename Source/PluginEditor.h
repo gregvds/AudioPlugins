@@ -182,7 +182,10 @@ private:
     RotaryLookAndFeel rotaryLookAndFeel1;
     RotaryLookAndFeel rotaryLookAndFeel2;
     RotaryLookAndFeel rotaryLookAndFeel3;
+    RotaryLookAndFeel rotaryLookAndFeel4;
+    RotaryLookAndFeel rotaryLookAndFeel5;
     VerticalLookAndFeel verticalLookAndFeel;
+    VerticalLookAndFeel verticalLookAndFeel2;
     XfeedLookAndFeel xfeedLookAndFeel;
     DirectLookAndFeel directLookAndFeel;
     LabelLookAndFeel labelLookAndFeel;
@@ -201,9 +204,15 @@ private:
     Rectangle<int> topPanel;
     Rectangle<int> menu;
     Rectangle<int> dials;
+    Rectangle<int> directSliders;
+    Rectangle<int> xfeedSliders;
     Rectangle<int> slider1;
     Rectangle<int> slider2;
     Rectangle<int> slider3;
+    Rectangle<int> slider4;
+    Rectangle<int> slider5;
+    Rectangle<int> slider6;
+
     Rectangle<int> leftSpectrumPart;
     Rectangle<int> spectrumFrame1;
     Rectangle<int> spectrumFrame2;
@@ -215,21 +224,27 @@ private:
                             {4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT},
                             {4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT}};
     
-    std::map < String, std::vector<float> > settingsDictionnary;
+    std::map < String, std::map < String, float > > settingsDictionnary;
     
 public:
  
     Slider delaySlider;
     Slider frequencySlider;
+    Slider xfeedFrequencySlider;
     Slider qSlider;
+    Slider xfeedQSlider;
     Slider separationSlider;
+    Slider xfeedSeparationSlider;
     Slider directGainSlider;
     Slider xfeedGainSlider;
     
     Label delayLabel;
     Label frequencyLabel;
+    Label xfeedFrequencyLabel;
     Label qLabel;
+    Label xfeedQLabel;
     Label separationLabel;
+    Label xfeedSeparationLabel;
     Label directGainLabel;
     Label xfeedGainLabel;
     
@@ -240,8 +255,11 @@ public:
     // Destruction operates on a bottom to top of the code order.
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> delaySliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> freqSliderAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> xfeedFreqSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> qSliderAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> xfeedQSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> sepSliderAttach;
+    std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> xfeedSepSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> directGainSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::SliderAttachment> xfeedGainSliderAttach;
     std::unique_ptr <AudioProcessorValueTreeState::ButtonAttachment> activeStateToggleButtonAttach;
