@@ -162,45 +162,30 @@ public:
         
         std::pair<double*, double*> minMaxDirectGain = std::minmax_element(std::begin(scopeGain[1]), std::end(scopeGain[1]));
         std::pair<double*, double*> minMaxXfeedGain = std::minmax_element(std::begin(scopeGain[0]), std::end(scopeGain[0]));
-        std::pair<double*, double*> minMaxDirectPhase = std::minmax_element(std::begin(scopePhase[1]), std::end(scopePhase[1]));
-        std::pair<double*, double*> minMaxXfeedPhase = std::minmax_element(std::begin(scopePhase[0]), std::end(scopePhase[0]));
-                
+
         float scopeMaxDirectGain  = jmap (jlimit(mindB, maxdB, gains[1] + Decibels::gainToDecibels((float)*(minMaxDirectGain.second))), mindB, maxdB, (float) y1 + height1, (float) y1);
         float scopeMinDirectGain  = jmap (jlimit(mindB, maxdB, gains[1] + Decibels::gainToDecibels((float)*(minMaxDirectGain.first))), mindB, maxdB, (float) y1 + height1, (float) y1);
         float scopeMaxXfeedGain   = jmap (jlimit(mindB, maxdB, gains[0] + Decibels::gainToDecibels((float)*(minMaxXfeedGain.second))), mindB, maxdB, (float) y1 + height1, (float) y1);
         float scopeMinXfeedGain   = jmap (jlimit(mindB, maxdB, gains[0] + Decibels::gainToDecibels((float)*(minMaxXfeedGain.first))), mindB, maxdB, (float) y1 + height1, (float) y1);
-        
-        DBG("MaxDirectPhase: " << (float)*(minMaxDirectPhase.second));
-        DBG("MinDirectPhase: " << (float)*(minMaxDirectPhase.first));
-        DBG("MaxXfeedPhase: " << (float)*(minMaxXfeedPhase.second));
-        DBG("MinXfeedPhase: " << (float)*(minMaxXfeedPhase.first));
-        
-        DBG("Freq for minMaxDirectPhase: " << getFrequencyForPhase((float)*(minMaxDirectPhase.second), 1));
-        DBG("Freq for MinDirectPhase: " << getFrequencyForPhase((float)*(minMaxDirectPhase.first), 1));
-        DBG("Freq for MaxXfeedPhase: " << getFrequencyForPhase((float)*(minMaxXfeedPhase.second), 0));
-        DBG("Freq for MinXfeedPhase: " << getFrequencyForPhase((float)*(minMaxXfeedPhase.first), 0));
-        
-        float scopeMaxDirectPhase = jmap (jlimit(minPhase, maxPhase, getTimeForPhase((float)*(minMaxDirectPhase.first), getFrequencyForPhase((float)*(minMaxDirectPhase.first), 1))), minPhase, maxPhase, (float) y2 + height2, (float) y2);
-        float scopeMinDirectPhase = jmap (jlimit(minPhase, maxPhase, getTimeForPhase((float)*(minMaxDirectPhase.second), getFrequencyForPhase((float)*(minMaxDirectPhase.second), 1))), minPhase, maxPhase, (float) y2 + height2, (float) y2);
-        float scopeMaxXfeedPhase  = jmap (jlimit(minPhase, maxPhase, phases[0] + getTimeForPhase((float)*(minMaxXfeedPhase.first), getFrequencyForPhase((float)*(minMaxXfeedPhase.first), 0))), minPhase, maxPhase, (float) y2 + height2, (float) y2);
-        float scopeMinXfeedPhase  = jmap (jlimit(minPhase, maxPhase, phases[0] + getTimeForPhase((float)*(minMaxXfeedPhase.second), getFrequencyForPhase((float)*(minMaxXfeedPhase.second), 0))), minPhase, maxPhase, (float) y2 + height2, (float) y2);
-        
-        DBG("scopeMaxDirectPhase: " << scopeMaxDirectPhase);
-        DBG("scopeMinDirectPhase: " << scopeMinDirectPhase);
-        DBG("scopeMaxXfeedPhase: " << scopeMaxXfeedPhase);
-        DBG("scopeMinXfeedPhase: " << scopeMinXfeedPhase);
-        
+
+        float scopeMaxDirectPhase = jmap (jlimit(minPhase, maxPhase, getMaxTime(1)), minPhase, maxPhase, (float) y2 + height2, (float) y2);
+        float scopeMinDirectPhase = jmap (jlimit(minPhase, maxPhase, getMinTime(1)), minPhase, maxPhase, (float) y2 + height2, (float) y2);
+        float scopeMaxXfeedPhase  = jmap (jlimit(minPhase, maxPhase, phases[0] + getMaxTime(0)), minPhase, maxPhase, (float) y2 + height2, (float) y2);
+        float scopeMinXfeedPhase  = jmap (jlimit(minPhase, maxPhase, phases[0] + getMinTime(0)), minPhase, maxPhase, (float) y2 + height2, (float) y2);
+         
         g.setGradientFill(ColourGradient(separationColour.withAlpha(separationTransparency), 0.0f, y1, Colours::transparentWhite, hFPos, y1, false));
         // VVV Draw Area on which separation is active for Direct Curve in Gain diagram
         g.fillRoundedRectangle(3.0f, scopeMaxDirectGain, hFPos, std::abs(scopeMaxDirectGain - scopeMinDirectGain), 5);
         // Draw Area on which separation is active for Direct Curve in Phase diagram
-        g.fillRoundedRectangle(3.0f, scopeMaxDirectPhase, hFPos, std::abs(scopeMinDirectPhase - scopeMaxDirectPhase), 5);
+        g.fillRoundedRectangle(3.0f, scopeMaxDirectPhase, hFPos, std::abs(scopeMaxDirectPhase - scopeMinDirectPhase), 5);
 
-        g.setGradientFill(ColourGradient(separationColour.withAlpha(xSeparationTransparency), 0.0f, y1, Colours::transparentWhite, hFPos, y1, false));
+        g.setGradientFill(ColourGradient(separationColour.withAlpha(xSeparationTransparency), 0.0f, y1, Colours::transparentWhite, xHFPos, y1, false));
         // VVV Draw Area on which separation is active for Xfeed Curve in Gain diagram
         g.fillRoundedRectangle(3.0f, scopeMaxXfeedGain, xHFPos, std::abs(scopeMaxXfeedGain - scopeMinXfeedGain), 5);
         // Draw Area on which separation is active for Xfeed Curve in Phase diagram
-        g.fillRoundedRectangle(3.0f, scopeMaxXfeedPhase, xHFPos, std::abs(scopeMinXfeedPhase - scopeMaxXfeedPhase), 5);
+        
+        
+        g.fillRoundedRectangle(3.0f, scopeMaxXfeedPhase, xHFPos, std::abs(scopeMaxXfeedPhase - scopeMinXfeedPhase), 5);
         
         g.setColour (bandwidthColour.withAlpha(0.25f));
         // VVV Draw bandwidth based on Q values and frequency of filter(s) for Direct Curve in Gain Diagram.
@@ -211,6 +196,8 @@ public:
         // VVV Draw bandwidth based on Q values and frequency of filter(s) for Xfeed Curve in Gain Diagram.
         g.fillRoundedRectangle(xLFPos, scopeMaxXfeedGain, xHFPos - xLFPos, std::abs(scopeMaxXfeedGain - scopeMinXfeedGain), 5);
         // Draw bandwidth based on Q values and frequency of filter(s) for Xfeed Curve in Phase Diagram.
+        
+        
         g.fillRoundedRectangle(xLFPos, scopeMaxXfeedPhase, xHFPos - xLFPos, std::abs(scopeMaxXfeedPhase - scopeMinXfeedPhase), 5);
 
         // Draw xfeed Delay horizontal line
@@ -854,6 +841,36 @@ private:
         return 20000.0f;
     }
     
+    float getMinTime(int filterIndex)
+    {
+        float timeCandidate = 10000.0f;
+        for (int i = 0; i < scopeSize; ++i)
+        {
+            float time = getTimeForPhase(scopePhase[filterIndex][i], scopeFreq[i]);
+            if (time < timeCandidate)
+            {
+                timeCandidate = time;
+            }
+        }
+        return timeCandidate;
+        
+    }
+    
+    float getMaxTime(int filterIndex)
+    {
+        float timeCandidate = -10000.0f;
+        for (int i = 0; i < scopeSize; ++i)
+        {
+            float time = getTimeForPhase(scopePhase[filterIndex][i], scopeFreq[i]);
+            if (time > timeCandidate)
+            {
+                timeCandidate = time;
+            }
+        }
+        return timeCandidate;
+        
+    }
+
     float getScopeIndexForFrequency(float freq)
     {
         // return the scopeIndex of the frequency interval in which the frequency lies
