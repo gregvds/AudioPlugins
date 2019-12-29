@@ -44,12 +44,15 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     addAndMakeVisible(guiLayoutMenu);
 
     crossFeedMenu.setEditableText(true);
-    crossFeedMenu.addItem("Full", 1);
-    crossFeedMenu.addItem("Medium", 2);
-    crossFeedMenu.addItem("Light", 3);
-    crossFeedMenu.addItem("Pure Haas", 4);
-    crossFeedMenu.addItem("Nice", 5);
-    crossFeedMenu.setSelectedId(5);
+    crossFeedMenu.addItem("Mode 1", 1);
+    crossFeedMenu.addItem("Mode 2", 2);
+    crossFeedMenu.addItem("Mode 3", 3);
+    crossFeedMenu.addItem("Mode 4", 4);
+    crossFeedMenu.addItem("Mode 5", 5);
+    crossFeedMenu.addItem("Mode 6", 6);
+    crossFeedMenu.addItem("Pure Haas", 7);
+    crossFeedMenu.addItem("Nice", 8);
+    crossFeedMenu.setSelectedId(8);
     crossFeedMenu.setJustificationType(Justification::centred);
     crossFeedMenu.addListener(this);
     crossFeedMenu.setTooltip(TRANS ("Global intensity settings"));
@@ -261,11 +264,68 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     addAndMakeVisible(spectrumAnalyser);
     
     /*
-    settingsDictionnary[String("Full")] = {0.0f , 400.0f , -5.0f, 0.57f, 5.0f, -5.0f};
-    settingsDictionnary[String("Medium")] = {94.0f, 700.0f , -4.0f, 0.45f, 4.0f, -4.0f};
-    settingsDictionnary[String("Light")] = {67.0f, 400.0f , -3.0f, 0.6f, 3.1f, -3.1f};
-    settingsDictionnary[String("Pure Haas")] = {270.0f, 700.0f , 0.0f, 1.0f, 1.0f, -3.0f};
-    */
+    Define settings for filters...
+     */
+    settingsDictionnary[String("Mode 1")]["delay"] = 160.0f;
+    settingsDictionnary[String("Mode 1")]["directFreq"] = 647.0f;
+    settingsDictionnary[String("Mode 1")]["directSep"] = 0.0f;
+    settingsDictionnary[String("Mode 1")]["directGain"] = 0.0f;
+    settingsDictionnary[String("Mode 1")]["directQ"] = 0.48f;
+    settingsDictionnary[String("Mode 1")]["xfeedFreq"] = 355.0f;
+    settingsDictionnary[String("Mode 1")]["xfeedSep"] = -3.2f;
+    settingsDictionnary[String("Mode 1")]["xfeedGain"] = -3.2f;
+    settingsDictionnary[String("Mode 1")]["xfeedQ"] = 0.58f;
+
+    settingsDictionnary[String("Mode 2")]["delay"] = 44.0f;
+    settingsDictionnary[String("Mode 2")]["directFreq"] = 609.0f;
+    settingsDictionnary[String("Mode 2")]["directSep"] = -2.0f;
+    settingsDictionnary[String("Mode 2")]["directGain"] = 1.8f;
+    settingsDictionnary[String("Mode 2")]["directQ"] = 0.48f;
+    settingsDictionnary[String("Mode 2")]["xfeedFreq"] = 355.0f;
+    settingsDictionnary[String("Mode 2")]["xfeedSep"] = -3.2f;
+    settingsDictionnary[String("Mode 2")]["xfeedGain"] = -3.2f;
+    settingsDictionnary[String("Mode 2")]["xfeedQ"] = 0.42f;
+
+    settingsDictionnary[String("Mode 3")]["delay"] = 8.0f;
+    settingsDictionnary[String("Mode 3")]["directFreq"] = 434.8f;
+    settingsDictionnary[String("Mode 3")]["directSep"] = -2.0f;
+    settingsDictionnary[String("Mode 3")]["directGain"] = 2.1f;
+    settingsDictionnary[String("Mode 3")]["directQ"] = 0.30f;
+    settingsDictionnary[String("Mode 3")]["xfeedFreq"] = 300.0f;
+    settingsDictionnary[String("Mode 3")]["xfeedSep"] = -3.2f;
+    settingsDictionnary[String("Mode 3")]["xfeedGain"] = -2.1f;
+    settingsDictionnary[String("Mode 3")]["xfeedQ"] = 0.63f;
+
+    settingsDictionnary[String("Mode 4")]["delay"] = 178.71f;
+    settingsDictionnary[String("Mode 4")]["directFreq"] = 647.0f;
+    settingsDictionnary[String("Mode 4")]["directSep"] = -1.3f;
+    settingsDictionnary[String("Mode 4")]["directGain"] = 0.2f;
+    settingsDictionnary[String("Mode 4")]["directQ"] = 0.30f;
+    settingsDictionnary[String("Mode 4")]["xfeedFreq"] = 1000.0f;
+    settingsDictionnary[String("Mode 4")]["xfeedSep"] = -5.6f;
+    settingsDictionnary[String("Mode 4")]["xfeedGain"] = -3.1f;
+    settingsDictionnary[String("Mode 4")]["xfeedQ"] = 0.85f;
+
+    settingsDictionnary[String("Mode 5")]["delay"] = 57.22f;
+    settingsDictionnary[String("Mode 5")]["directFreq"] = 300.0f;
+    settingsDictionnary[String("Mode 5")]["directSep"] = -3.0f;
+    settingsDictionnary[String("Mode 5")]["directGain"] = 0.0f;
+    settingsDictionnary[String("Mode 5")]["directQ"] = 0.48f;
+    settingsDictionnary[String("Mode 5")]["xfeedFreq"] = 1000.0f;
+    settingsDictionnary[String("Mode 5")]["xfeedSep"] = -3.0f;
+    settingsDictionnary[String("Mode 5")]["xfeedGain"] = -3.0f;
+    settingsDictionnary[String("Mode 5")]["xfeedQ"] = 0.48f;
+
+    settingsDictionnary[String("Mode 6")]["delay"] = 100.81f;
+    settingsDictionnary[String("Mode 6")]["directFreq"] = 406.80f;
+    settingsDictionnary[String("Mode 6")]["directSep"] = -3.0f;
+    settingsDictionnary[String("Mode 6")]["directGain"] = 0.0f;
+    settingsDictionnary[String("Mode 6")]["directQ"] = 0.66f;
+    settingsDictionnary[String("Mode 6")]["xfeedFreq"] = 595.37f;
+    settingsDictionnary[String("Mode 6")]["xfeedSep"] = -3.0f;
+    settingsDictionnary[String("Mode 6")]["xfeedGain"] = -3.0f;
+    settingsDictionnary[String("Mode 6")]["xfeedQ"] = 0.48f;
+
     settingsDictionnary[String("Nice")]["delay"] = 122.38f;
     settingsDictionnary[String("Nice")]["directFreq"] = 647.0f;
     settingsDictionnary[String("Nice")]["directSep"] = -3.0f;
@@ -276,7 +336,16 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     settingsDictionnary[String("Nice")]["xfeedGain"] = -3.2f;
     settingsDictionnary[String("Nice")]["xfeedQ"] = 0.48f;
     
-    
+    settingsDictionnary[String("Pure Haas")]["delay"] = 300.0f;
+    settingsDictionnary[String("Pure Haas")]["directFreq"] = 300.0f;
+    settingsDictionnary[String("Pure Haas")]["directSep"] = 0.0f;
+    settingsDictionnary[String("Pure Haas")]["directGain"] = 0.0f;
+    settingsDictionnary[String("Pure Haas")]["directQ"] = 0.0f;
+    settingsDictionnary[String("Pure Haas")]["xfeedFreq"] = 300.0f;
+    settingsDictionnary[String("Pure Haas")]["xfeedSep"] = 0.0f;
+    settingsDictionnary[String("Pure Haas")]["xfeedGain"] = -4.0f;
+    settingsDictionnary[String("Pure Haas")]["xfeedQ"] = 0.0f;
+
     /*
     preferencesButton.setButtonText("Preferences");
     preferencesButton.onClick = [this] {prefsPanel.showInDialogBox("Preferences", 400, 400, getLookAndFeel().findColour (ResizableWindow::backgroundColourId)); };
@@ -477,22 +546,6 @@ void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)
                 xfeedQSlider.setValue(settingsDictionnary[comboboxText]["xfeedQ"]);
                 directGainSlider.setValue(settingsDictionnary[comboboxText]["directGain"]);
                 xfeedGainSlider.setValue(settingsDictionnary[comboboxText]["xfeedGain"]);
-                
-                if (comboboxText == "Pure Haas")
-                {
-                    frequencySlider.setEnabled(false);
-                    qSlider.setEnabled(false);
-                    xfeedFrequencySlider.setEnabled(false);
-                    xfeedQSlider.setEnabled(false);
-
-                }
-                else
-                {
-                    frequencySlider.setEnabled(true);
-                    qSlider.setEnabled(true);
-                    xfeedFrequencySlider.setEnabled(true);
-                    xfeedQSlider.setEnabled(true);
-                }
             }
         } else
         {
