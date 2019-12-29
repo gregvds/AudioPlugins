@@ -85,7 +85,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    void fillDelayBuffer2(const int bufferLength, const int delayBufferLength, AudioBuffer<float>& buffer);
+    void fillDelayBuffer(const int bufferLength, const int delayBufferLength, AudioBuffer<float>& buffer);
     void addFromDelayBuffer(float delayTimeValue, AudioBuffer<float>& buffer, const int bufferLength, const int delayBufferLength);
     void updateFilterParameters ();
     

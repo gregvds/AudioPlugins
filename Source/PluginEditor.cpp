@@ -147,6 +147,16 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     separationSlider.setRange(-6.0f, 0.0f);
     separationSlider.setSkewFactorFromMidPoint(-4.0f);
     separationSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
+                                             if (separationSlider.getValue() == 0.0f)
+                                             {
+                                                 qSlider.setEnabled(false);
+                                                 frequencySlider.setEnabled(false);
+                                             }
+                                             else
+                                             {
+                                                 qSlider.setEnabled(true);
+                                                 frequencySlider.setEnabled(true);
+                                             }
                                              repaint(); };
     separationSlider.setTooltip(TRANS ("Separation between direct and crossfeed signals"));
     addAndMakeVisible(separationSlider);
@@ -163,6 +173,16 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedSeparationSlider.setRange(-6.0f, 0.0f);
     xfeedSeparationSlider.setSkewFactorFromMidPoint(-4.0f);
     xfeedSeparationSlider.onValueChange = [this] {filterGraphics.updatePhasesRange();
+                                                  if (xfeedSeparationSlider.getValue() == 0.0f)
+                                                  {
+                                                      xfeedQSlider.setEnabled(false);
+                                                      xfeedFrequencySlider.setEnabled(false);
+                                                  }
+                                                  else
+                                                  {
+                                                      xfeedQSlider.setEnabled(true);
+                                                      xfeedFrequencySlider.setEnabled(true);
+                                                  }
                                              repaint(); };
     xfeedSeparationSlider.setTooltip(TRANS ("Separation between crossfeed and direct signals"));
     addAndMakeVisible(xfeedSeparationSlider);

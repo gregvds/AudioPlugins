@@ -174,13 +174,13 @@ public:
         float scopeMinXfeedPhase  = jmap (jlimit(minPhase, maxPhase, phases[0] + getMinTime(0)), minPhase, maxPhase, (float) y2 + height2, (float) y2);
          
         g.setGradientFill(ColourGradient(separationColour.withAlpha(separationTransparency), 0.0f, y1, Colours::transparentWhite, hFPos, y1, false));
-        // VVV Draw Area on which separation is active for Direct Curve in Gain diagram
+        // Draw Area on which separation is active for Direct Curve in Gain diagram
         g.fillRoundedRectangle(3.0f, scopeMaxDirectGain, hFPos, std::abs(scopeMaxDirectGain - scopeMinDirectGain), 5);
         // Draw Area on which separation is active for Direct Curve in Phase diagram
         g.fillRoundedRectangle(3.0f, scopeMaxDirectPhase, hFPos, std::abs(scopeMaxDirectPhase - scopeMinDirectPhase), 5);
 
         g.setGradientFill(ColourGradient(separationColour.withAlpha(xSeparationTransparency), 0.0f, y1, Colours::transparentWhite, xHFPos, y1, false));
-        // VVV Draw Area on which separation is active for Xfeed Curve in Gain diagram
+        // Draw Area on which separation is active for Xfeed Curve in Gain diagram
         g.fillRoundedRectangle(3.0f, scopeMaxXfeedGain, xHFPos, std::abs(scopeMaxXfeedGain - scopeMinXfeedGain), 5);
         // Draw Area on which separation is active for Xfeed Curve in Phase diagram
         
@@ -188,12 +188,12 @@ public:
         g.fillRoundedRectangle(3.0f, scopeMaxXfeedPhase, xHFPos, std::abs(scopeMaxXfeedPhase - scopeMinXfeedPhase), 5);
         
         g.setColour (bandwidthColour.withAlpha(0.25f));
-        // VVV Draw bandwidth based on Q values and frequency of filter(s) for Direct Curve in Gain Diagram.
+        // Draw bandwidth based on Q values and frequency of filter(s) for Direct Curve in Gain Diagram.
         g.fillRoundedRectangle(lFPos, scopeMaxDirectGain, hFPos - lFPos, std::abs(scopeMaxDirectGain - scopeMinDirectGain), 5);
         // Draw bandwidth based on Q values and frequency of filter(s) for Direct Curve in Phase Diagram.
         g.fillRoundedRectangle(lFPos, scopeMaxDirectPhase, hFPos - lFPos, std::abs(scopeMaxDirectPhase - scopeMinDirectPhase), 5);
 
-        // VVV Draw bandwidth based on Q values and frequency of filter(s) for Xfeed Curve in Gain Diagram.
+        // Draw bandwidth based on Q values and frequency of filter(s) for Xfeed Curve in Gain Diagram.
         g.fillRoundedRectangle(xLFPos, scopeMaxXfeedGain, xHFPos - xLFPos, std::abs(scopeMaxXfeedGain - scopeMinXfeedGain), 5);
         // Draw bandwidth based on Q values and frequency of filter(s) for Xfeed Curve in Phase Diagram.
         

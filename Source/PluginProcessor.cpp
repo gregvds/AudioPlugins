@@ -291,7 +291,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         mFilterBuffer.applyGain(Decibels::decibelsToGain(2.0 * *xSepGainValue) * Decibels::decibelsToGain(*xGainValue));
         
         // We copy the filter buffer into the delay Buffer
-        fillDelayBuffer2(bufferLength, delayBufferLength, mFilterBuffer);
+        fillDelayBuffer(bufferLength, delayBufferLength, mFilterBuffer);
 
         // Do the filtering on the main buffer for the direct signal
         //updateFilterParameters();
@@ -323,7 +323,7 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
 //==============================================================================
 
 //==============================================================================
-void GainSliderAudioProcessor::fillDelayBuffer2(const int bufferLength, const int delayBufferLength, AudioBuffer<float>& buffer)
+void GainSliderAudioProcessor::fillDelayBuffer(const int bufferLength, const int delayBufferLength, AudioBuffer<float>& buffer)
 {
     const int bufferRemaining = delayBufferLength - mWritePosition;
     
