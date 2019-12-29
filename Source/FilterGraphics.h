@@ -384,14 +384,20 @@ private:
         }
         else
         {
-            auto posX            = graph1.getX() + getPositionForFrequency (float (freqs[0])) * graph1.getWidth();
-            auto posLowFreqForQ  = graph1.getX() + getPositionForFrequency (float (lowFreqForQ)) * graph1.getWidth();
-            auto posHighFreqForQ = graph1.getX() + getPositionForFrequency (float (highFreqForQ)) * graph1.getWidth();
-            // If we touch the frequency vertical line
+            auto posX                 = graph1.getX() + getPositionForFrequency (float (freqs[0])) * graph1.getWidth();
+            auto posXfeedX            = graph1.getX() + getPositionForFrequency (float (freqs[1])) * graph1.getWidth();
+            auto posLowFreqForQ       = graph1.getX() + getPositionForFrequency (float (lowFreqForQ)) * graph1.getWidth();
+            auto posHighFreqForQ      = graph1.getX() + getPositionForFrequency (float (highFreqForQ)) * graph1.getWidth();
+            auto posLowXfeedFreqForQ  = graph1.getX() + getPositionForFrequency (float (lowFreqForXQ)) * graph1.getWidth();
+            auto posHighXfeedFreqForQ = graph1.getX() + getPositionForFrequency (float (highFreqForXQ)) * graph1.getWidth();
+            
+            // If we touch the direct frequency vertical line
             if (std::abs (posX - e.position.getX()) < clickRadius)
             {
                 draggingFreq  = true;
+                draggingXfeedFreq = false;
                 draggingQ     = false;
+                draggingXfeedQ = false;
                 draggingCurve = -1;
                 draggingGain  = false;
                 draggingPhase = false;
@@ -406,11 +412,13 @@ private:
                 repaint (graph2);
                 return;
             }
-            // If we touch the Q window limit
-            else if (std::abs (posLowFreqForQ - e.position.getX()) < clickRadius or std::abs (posHighFreqForQ - e.position.getX()) < clickRadius)
+            // If we touch the xfeed frequency vertical line
+            if (std::abs (posXfeedX - e.position.getX()) < clickRadius)
             {
                 draggingFreq  = false;
-                draggingQ     = true;
+                draggingXfeedFreq = true;
+                draggingQ     = false;
+                draggingXfeedQ = false;
                 draggingCurve = -1;
                 draggingGain  = false;
                 draggingPhase = false;
@@ -424,16 +432,59 @@ private:
                 repaint (graph1);
                 repaint (graph2);
                 return;
-
             }
-            else if (graph1.contains(e.x, e.y))
+            // If we touch the Direct Q window limit
+            if (std::abs (posLowFreqForQ - e.position.getX()) < clickRadius or std::abs (posHighFreqForQ - e.position.getX()) < clickRadius)
+            {
+                draggingFreq  = false;
+                draggingXfeedFreq = false;
+                draggingQ     = true;
+                draggingXfeedQ = false;
+                draggingCurve = -1;
+                draggingGain  = false;
+                draggingPhase = false;
+                
+                draggingMinDB = false;
+                draggingMaxDb = false;
+                draggingMinPhase = false;
+                draggingMaxPhase = false;
+
+                setMouseCursor (MouseCursor (MouseCursor::LeftRightResizeCursor));
+                repaint (graph1);
+                repaint (graph2);
+                return;
+            }
+            // If we touch the Xfeed Q window limit
+            if (std::abs (posLowXfeedFreqForQ - e.position.getX()) < clickRadius or std::abs (posHighXfeedFreqForQ - e.position.getX()) < clickRadius)
+            {
+                draggingFreq  = false;
+                draggingXfeedFreq = false;
+                draggingQ     = false;
+                draggingXfeedQ = true;
+                draggingCurve = -1;
+                draggingGain  = false;
+                draggingPhase = false;
+                
+                draggingMinDB = false;
+                draggingMaxDb = false;
+                draggingMinPhase = false;
+                draggingMaxPhase = false;
+
+                setMouseCursor (MouseCursor (MouseCursor::LeftRightResizeCursor));
+                repaint (graph1);
+                repaint (graph2);
+                return;
+            }
+            if (graph1.contains(e.x, e.y))
             {
                 draggingCurve = isOnCurve(e, clickRadius);
                 // If we touch a curve in graph 1
                 if (isPositiveAndBelow(draggingCurve, 2))
                 {
                     draggingFreq  = false;
+                    draggingXfeedFreq = false;
                     draggingQ     = false;
+                    draggingXfeedQ = false;
                     draggingGain  = true;
                     draggingPhase = false;
                     
@@ -452,7 +503,9 @@ private:
                     if (isOnPositiveRange(e))
                     {
                         draggingFreq  = false;
+                        draggingXfeedFreq = false;
                         draggingQ     = false;
+                        draggingXfeedQ = false;
                         draggingGain  = false;
                         draggingPhase = false;
 
@@ -468,7 +521,9 @@ private:
                     if (isOnNegativeRange(e))
                     {
                         draggingFreq  = false;
+                        draggingXfeedFreq = false;
                         draggingQ     = false;
+                        draggingXfeedQ = false;
                         draggingGain  = false;
                         draggingPhase = false;
 
@@ -483,14 +538,16 @@ private:
                     }
                 }
             }
-            else if (graph2.contains(e.x, e.y))
+            if (graph2.contains(e.x, e.y))
             {
                 draggingCurve = isOnCurve(e, clickRadius);
                 // if we touch a curve in graph 2
                 if (draggingCurve == 2)
                 {
                     draggingFreq  = false;
+                    draggingXfeedFreq = false;
                     draggingQ     = false;
+                    draggingXfeedQ = false;
                     draggingGain  = false;
                     draggingPhase = true;
                     
@@ -509,7 +566,9 @@ private:
                     if (isOnPositiveRange(e))
                     {
                         draggingFreq  = false;
+                        draggingXfeedFreq = false;
                         draggingQ     = false;
+                        draggingXfeedQ = false;
                         draggingGain  = false;
                         draggingPhase = false;
 
@@ -525,7 +584,9 @@ private:
                     if (isOnNegativeRange(e))
                     {
                         draggingFreq  = false;
+                        draggingXfeedFreq = false;
                         draggingQ     = false;
+                        draggingXfeedQ = false;
                         draggingGain  = false;
                         draggingPhase = false;
 
@@ -542,7 +603,9 @@ private:
             }
         }
         draggingFreq  = false;
+        draggingXfeedFreq = false;
         draggingQ     = false;
+        draggingXfeedQ = false;
         draggingCurve = -1;
         draggingGain  = false;
         draggingPhase = false;
@@ -563,12 +626,15 @@ private:
         auto posX = (e.position.getX() - graph1.getX()) / graph1.getWidth();
         auto posY = e.position.getY();
         
-        Slider* delaySlider      = getSlider("delaySlider");
-        Slider* qSlider          = getSlider("qSlider");
-        Slider* frequencySlider  = getSlider("frequencySlider");
-        Slider* separationSlider = getSlider("separationSlider");
-        Slider* directGainSlider = getSlider("directGainSlider");
-        Slider* xfeedGainSlider  = getSlider("xfeedGainSlider");
+        Slider* delaySlider           = getSlider("delaySlider");
+        Slider* qSlider               = getSlider("qSlider");
+        Slider* xfeedQSlider          = getSlider("xfeedQSlider");
+        Slider* frequencySlider       = getSlider("frequencySlider");
+        Slider* xfeedFrequencySlider  = getSlider("xfeedFrequencySlider");
+        Slider* separationSlider      = getSlider("separationSlider");
+        Slider* xfeedSeparationSlider = getSlider("xfeedSeparationSlider");
+        Slider* directGainSlider      = getSlider("directGainSlider");
+        Slider* xfeedGainSlider       = getSlider("xfeedGainSlider");
 
         if (draggingFreq)
         {
@@ -577,25 +643,44 @@ private:
                 frequencySlider->setValue(getFrequencyForPosition(posX));
             }
         }
+        if (draggingXfeedFreq)
+        {
+            if (xfeedFrequencySlider != nullptr)
+            {
+                xfeedFrequencySlider->setValue(getFrequencyForPosition(posX));
+            }
+        }
         if (draggingQ)
         {
             if (qSlider != nullptr)
             {
                 auto posFreq     = getPositionForFrequency (float (freqs[0]));
-                
-                //DBG("posX: " << posX);
-                //DBG("posFreq: " << posFreq);
-                //DBG("Q: " << 0.5*(freqs[0] / (freqs[0] - getFrequencyForPosition(posX))));
-                
-                // If adjusting Q from its low limit
+                // If adjusting direct Q from its low limit
                 if (posX < posFreq)
                 {
                     qSlider->setValue((1.0 - qGraphicalAdjustmentFactor) * (0.5) * (freqs[0] / (freqs[0] - getFrequencyForPosition(posX))));
                 }
-                // if adjusting Q from its high limit
+                // if adjusting direct Q from its high limit
                 else if (posFreq < posX)
                 {
                     qSlider->setValue((1.0 + qGraphicalAdjustmentFactor) * (0.5) * (freqs[0] / (getFrequencyForPosition(posX) - freqs[0])));
+                }
+            }
+        }
+        if (draggingXfeedQ)
+        {
+            if (xfeedQSlider != nullptr)
+            {
+                auto posXfeedFreq     = getPositionForFrequency (float (freqs[0]));
+                // If adjusting xfeed Q from its low limit
+                if (posX < posXfeedFreq)
+                {
+                    xfeedQSlider->setValue((1.0 - qGraphicalAdjustmentFactor) * (0.5) * (freqs[1] / (freqs[1] - getFrequencyForPosition(posX))));
+                }
+                // if adjusting xfeed Q from its high limit
+                else if (posXfeedFreq < posX)
+                {
+                    xfeedQSlider->setValue((1.0 + qGraphicalAdjustmentFactor) * (0.5) * (freqs[1] / (getFrequencyForPosition(posX) - freqs[1])));
                 }
             }
         }
@@ -614,7 +699,7 @@ private:
             {
                 if (draggingCurve == 0)
                 {
-                    separationSlider->setValue( - Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / Decibels::decibelsToGain(xfeedGainSlider->getValue())));
+                    xfeedSeparationSlider->setValue( - Decibels::gainToDecibels(getGainForPosition(posY, graph1.getY(), graph1.getBottom()) / Decibels::decibelsToGain(xfeedGainSlider->getValue())));
                 }
                 else if (draggingCurve == 1)
                 {
@@ -947,12 +1032,14 @@ private:
     float mouseDownY;
 
     // Dragging elements in diagrams
-    int  clickRadius   = 4;
-    bool draggingFreq  = false;
-    bool draggingQ     = false;
-    int  draggingCurve = -1;
-    bool draggingGain  = false;
-    bool draggingPhase = false;
+    int  clickRadius       = 4;
+    bool draggingFreq      = false;
+    bool draggingXfeedFreq = false;
+    bool draggingQ         = false;
+    bool draggingXfeedQ    = false;
+    int  draggingCurve     = -1;
+    bool draggingGain      = false;
+    bool draggingPhase     = false;
     
     // Dragging in diagrams themselves to modify their min and max in y (dB range diagram 1, phase range diagram 2) first
     // TBD: later dragging could modify also the min and max in x (frequency range in both diagram)
