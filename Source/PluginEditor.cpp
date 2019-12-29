@@ -83,9 +83,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     frequencySlider.onValueChange = [this] {filterGraphics.freqs[0] = frequencySlider.getValue();
                                             filterGraphics.updatePhasesRange();
                                             repaint(); };
-    frequencySlider.setTooltip(TRANS ("Direct cutoff frequency"));
+    frequencySlider.setTooltip(TRANS ("Direct filter frequency"));
     addAndMakeVisible(frequencySlider);
-    frequencyLabel.setText("D Cutoff frequency", NotificationType::dontSendNotification);
+    frequencyLabel.setText("Direct frequency", NotificationType::dontSendNotification);
     frequencyLabel.setLookAndFeel(&labelLookAndFeel);
     frequencyLabel.attachToComponent(&frequencySlider, false);
     frequencyLabel.setJustificationType(Justification::centredBottom);
@@ -100,16 +100,16 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     xfeedFrequencySlider.onValueChange = [this] {filterGraphics.freqs[1] = xfeedFrequencySlider.getValue();
                                             filterGraphics.updatePhasesRange();
                                             repaint(); };
-    xfeedFrequencySlider.setTooltip(TRANS ("Crossfeed cutoff frequency"));
+    xfeedFrequencySlider.setTooltip(TRANS ("Crossfeed filter frequency"));
     addAndMakeVisible(xfeedFrequencySlider);
-    xfeedFrequencyLabel.setText("X Cutoff frequency", NotificationType::dontSendNotification);
+    xfeedFrequencyLabel.setText("Xfeed frequency", NotificationType::dontSendNotification);
     xfeedFrequencyLabel.setLookAndFeel(&labelLookAndFeel);
     xfeedFrequencyLabel.attachToComponent(&xfeedFrequencySlider, false);
     xfeedFrequencyLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(xfeedFrequencyLabel);
 
     qSlider.setName("qSlider");
-    qSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+    qSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     qSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     qSlider.setTextValueSuffix(" Q");
     qSlider.setRange(0.1f, 1.0f);
@@ -118,14 +118,14 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
                                     repaint(); };
     qSlider.setTooltip(TRANS ("Direct Filter quality"));
     addAndMakeVisible(qSlider);
-    qLabel.setText("D Quality", NotificationType::dontSendNotification);
+    qLabel.setText("Direct Q", NotificationType::dontSendNotification);
     qLabel.setLookAndFeel(&labelLookAndFeel);
     qLabel.attachToComponent(&qSlider, false);
     qLabel.setJustificationType(Justification::centredBottom);
     addAndMakeVisible(qLabel);
     
     xfeedQSlider.setName("xfeedQSlider");
-    xfeedQSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+    xfeedQSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
     xfeedQSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     xfeedQSlider.setTextValueSuffix(" Q");
     xfeedQSlider.setRange(0.1f, 1.0f);
@@ -134,7 +134,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
                                     repaint(); };
     xfeedQSlider.setTooltip(TRANS ("Xfeed Filter quality"));
     addAndMakeVisible(xfeedQSlider);
-    xfeedQLabel.setText("X Quality", NotificationType::dontSendNotification);
+    xfeedQLabel.setText("Xfeed Q", NotificationType::dontSendNotification);
     xfeedQLabel.setLookAndFeel(&labelLookAndFeel);
     xfeedQLabel.attachToComponent(&xfeedQSlider, false);
     xfeedQLabel.setJustificationType(Justification::centredBottom);
@@ -158,9 +158,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
                                                  frequencySlider.setEnabled(true);
                                              }
                                              repaint(); };
-    separationSlider.setTooltip(TRANS ("Separation between direct and crossfeed signals"));
+    separationSlider.setTooltip(TRANS ("Direct filter intensity"));
     addAndMakeVisible(separationSlider);
-    separationLabel.setText("D Separation", NotificationType::dontSendNotification);
+    separationLabel.setText("Direct filter Intensity", NotificationType::dontSendNotification);
     separationLabel.setLookAndFeel(&labelLookAndFeel);
     separationLabel.attachToComponent(&separationSlider, false);
     separationLabel.setJustificationType(Justification::centredBottom);
@@ -184,9 +184,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
                                                       xfeedFrequencySlider.setEnabled(true);
                                                   }
                                              repaint(); };
-    xfeedSeparationSlider.setTooltip(TRANS ("Separation between crossfeed and direct signals"));
+    xfeedSeparationSlider.setTooltip(TRANS ("Crossfeed filter intensity"));
     addAndMakeVisible(xfeedSeparationSlider);
-    xfeedSeparationLabel.setText("X Separation", NotificationType::dontSendNotification);
+    xfeedSeparationLabel.setText("Xfeed filter intensity", NotificationType::dontSendNotification);
     xfeedSeparationLabel.setLookAndFeel(&labelLookAndFeel);
     xfeedSeparationLabel.attachToComponent(&xfeedSeparationSlider, false);
     xfeedSeparationLabel.setJustificationType(Justification::centredBottom);
@@ -194,7 +194,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
 
     
     directGainSlider.setName("directGainSlider");
-    directGainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
+    directGainSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     directGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     directGainSlider.setTextValueSuffix(" dB");
     directGainSlider.setRange(-10.0f, 10.0f);
@@ -208,7 +208,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     addAndMakeVisible(directGainLabel);
     
     xfeedGainSlider.setName("xfeedGainSlider");
-    xfeedGainSlider.setSliderStyle(Slider::SliderStyle::LinearVertical);
+    xfeedGainSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
     xfeedGainSlider.setTextBoxStyle(Slider::TextBoxBelow, false, TEXTBOXWIDTH, TEXTBOXHEIGT);
     xfeedGainSlider.setTextValueSuffix(" dB");
     xfeedGainSlider.setRange(-10.0f, 10.0f);
@@ -346,25 +346,26 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
 
     int dialSize = dials.getHeight() - 3 * (LABELHEIGHT + TEXTBOXHEIGT);
     
-    qLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    qSlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
+    directGainLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
+    directGainSlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
     delayLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
     delaySlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
-    xfeedQLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
-    xfeedQSlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
+    xfeedGainLabel.setBounds(dials.removeFromTop(LABELHEIGHT));
+    xfeedGainSlider.setBounds(dials.removeFromTop(dialSize / 3 + TEXTBOXHEIGT));
     
     frequencyLabel.setBounds(slider1.removeFromTop(LABELHEIGHT));
     frequencySlider.setBounds(slider1);
-    xfeedFrequencyLabel.setBounds(slider4.removeFromTop(LABELHEIGHT));
-    xfeedFrequencySlider.setBounds(slider4);
     separationLabel.setBounds(slider2.removeFromTop(LABELHEIGHT));
     separationSlider.setBounds(slider2);
+    qLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
+    qSlider.setBounds(slider3);
+
+    xfeedFrequencyLabel.setBounds(slider4.removeFromTop(LABELHEIGHT));
+    xfeedFrequencySlider.setBounds(slider4);
     xfeedSeparationLabel.setBounds(slider5.removeFromTop(LABELHEIGHT));
     xfeedSeparationSlider.setBounds(slider5);
-    directGainLabel.setBounds(slider3.removeFromTop(LABELHEIGHT));
-    directGainSlider.setBounds(slider3);
-    xfeedGainLabel.setBounds(slider6.removeFromTop(LABELHEIGHT));
-    xfeedGainSlider.setBounds(slider6);
+    xfeedQLabel.setBounds(slider6.removeFromTop(LABELHEIGHT));
+    xfeedQSlider.setBounds(slider6);
     
     if (guiLayoutMenu.getSelectedId() == 1)
     {
