@@ -23,6 +23,7 @@
             file="Source/FilterGraphics.h"/>
       <FILE id="vwInwK" name="SpectrumAnalyser.h" compile="0" resource="0"
             file="Source/SpectrumAnalyser.h"/>
+      <FILE id="g3BPeR" name="ISInterface.h" compile="0" resource="0" file="Source/ISInterface.h"/>
     </GROUP>
   </MAINGROUP>
   <EXPORTFORMATS>
