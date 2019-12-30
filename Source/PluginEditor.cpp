@@ -28,7 +28,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     //setResizable (true, true);
     setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT);
     
-
+    activeStateToggleButton.setName("activeStateToggleButton");
     activeStateToggleButton.setToggleState (true, NotificationType::dontSendNotification);
     activeStateToggleButton.setClickingTogglesState(true);
     addAndMakeVisible(activeStateToggleButton);
@@ -37,6 +37,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     guiLayoutMenu.addItem("+ Diagrams", 2);
     guiLayoutMenu.addItem("+ Spectrum", 3);
     guiLayoutMenu.addItem("Full plugin", 4);
+    //guiLayoutMenu.addItem("I.S. interface", 5);
     guiLayoutMenu.setSelectedId(2);
     guiLayoutMenu.setJustificationType(Justification::centred);
     guiLayoutMenu.addListener(this);
@@ -262,6 +263,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     
     addAndMakeVisible(filterGraphics);
     addAndMakeVisible(spectrumAnalyser);
+    addAndMakeVisible(iSInterface);
     
     /*
     Define settings for filters...
@@ -459,11 +461,13 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     {
         spectrumFrame2 = bounds.removeFromBottom(SPECTRUMHEIGHT);
         spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
-        spectrumFrame2.enlargeIfAdjacent(leftSpectrumPart);
+        //spectrumFrame2.enlargeIfAdjacent(leftSpectrumPart);
         filterGraphics.setBounds(spectrumFrame1);
         spectrumAnalyser.setBounds(spectrumFrame2);
+        iSInterface.setBounds(leftSpectrumPart);
         spectrumAnalyser.setVisible(true);
         filterGraphics.setVisible(true);
+        iSInterface.setVisible(true);
     }
 }
 

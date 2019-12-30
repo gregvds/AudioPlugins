@@ -14,6 +14,7 @@
 #include "PluginProcessor.h"
 #include "SpectrumAnalyser.h"
 #include "FilterGraphics.h"
+#include "ISInterface.h"
 
 #define DIALSIZE 100
 #define SLIDERSIZE 200
@@ -250,6 +251,7 @@ public:
     
     FilterGraphics filterGraphics;
     SpectrumAnalyser spectrumAnalyser;
+    ISInterface iSInterface;
     
     // Things public to be destroyed before private stuff.
     // Destruction operates on a bottom to top of the code order.
