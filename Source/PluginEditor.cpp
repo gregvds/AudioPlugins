@@ -38,7 +38,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     guiLayoutMenu.addItem("+ Spectrum", 3);
     guiLayoutMenu.addItem("Full plugin", 4);
     //guiLayoutMenu.addItem("I.S. interface", 5);
-    guiLayoutMenu.setSelectedId(2);
+    guiLayoutMenu.setSelectedId(4);
     guiLayoutMenu.setJustificationType(Justification::centred);
     guiLayoutMenu.addListener(this);
     guiLayoutMenu.setTooltip(TRANS ("Gui layout choice"));

@@ -16,27 +16,57 @@ static Colour leftColour      = Colour(0xFF00BFFF);
 static Colour rightColour     = Colour(0xFF1E90FF);
 static Colour transparent     = Colour(0x00FFFFFF);
 
-class RightLookAndFeel : public LookAndFeel_V4,
-                         public Component
-{
-public:
-    RightLookAndFeel()
-    {
-        LookAndFeel_V4::setColour(Slider::ColourIds::thumbColourId, rightColour);
-        LookAndFeel_V4::setColour(Slider::ColourIds::rotarySliderFillColourId, transparent);
-    }
-};
 
-class LeftLookAndFeel : public LookAndFeel_V4,
+class HdphnzLookAndFeel : public LookAndFeel_V4,
                         public Component
 {
 public:
-    LeftLookAndFeel()
+    HdphnzLookAndFeel()
     {
         LookAndFeel_V4::setColour(Slider::ColourIds::thumbColourId, leftColour);
         LookAndFeel_V4::setColour(Slider::ColourIds::trackColourId, transparent);
         LookAndFeel_V4::setColour(Slider::ColourIds::rotarySliderFillColourId, transparent);
-        LookAndFeel_V4::setColour(Slider::ColourIds::rotarySliderOutlineColourId, transparent);
+    }
+    
+    void drawRotarySlider (Graphics &g, int x, int y, int width, int height, float sliderPositionProportional, float rotaryStartAngle, float rotaryEndAngle, Slider &slider) override
+    {
+        auto outline = slider.findColour (Slider::rotarySliderOutlineColourId);
+        auto bounds = Rectangle<int> (x, y, width, height).toFloat().reduced (10);
+        auto radius = jmin (bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        auto lineW = jmin (8.0f, radius * 0.5f);
+        auto arcRadius = radius - lineW * 0.5f;
+
+        float centerX = x + width / 2.0f;
+        float centerY = y + height / 2.0f;
+        float leftAngle = MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi;
+        float rightAngle = -1.0f * (MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi);
+        float rotationAngle = sliderPositionProportional * (rotaryEndAngle - rotaryStartAngle);
+        
+        Path backgroundArc;
+        backgroundArc.addCentredArc (bounds.getCentreX(),
+                                     bounds.getCentreY(),
+                                     arcRadius,
+                                     arcRadius,
+                                     0.0f,
+                                     rotaryStartAngle,
+                                     rotaryEndAngle,
+                                     true);
+
+        g.setColour (outline);
+        g.strokePath (backgroundArc, PathStrokeType (lineW, PathStrokeType::curved, PathStrokeType::rounded));
+
+        Path headphoneTransducer;
+        headphoneTransducer.addRectangle(-10, 0, 20, 10);
+        headphoneTransducer.addTriangle(-20, -6, 20, -6, 0, 10);
+        headphoneTransducer.addRectangle(-20, -9, 40, 3);
+        headphoneTransducer.addEllipse(-15, -11, 30, 12);
+        
+        g.setColour(leftColour);
+        g.fillPath(headphoneTransducer, AffineTransform::rotation(leftAngle).translated(centerX + radius * sin(rotaryStartAngle + rotationAngle), centerY - radius * cos(rotaryStartAngle + rotationAngle)));
+
+        g.setColour(rightColour);
+        g.fillPath(headphoneTransducer, AffineTransform::rotation(rightAngle).translated(centerX + radius * sin(rotaryEndAngle - rotationAngle), centerY - radius * cos(rotaryEndAngle - rotationAngle)));
+
     }
 };
 
@@ -49,39 +79,25 @@ public:
         setOpaque (true);
         tooltipWindow->setMillisecondsBeforeTipAppears (500);
         
-        rightSlider.setName("rightSlider");
-        rightSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
-        rightSlider.setRange(-100.0f, 100.0f);
-        rightSlider.setValue(100.0f);
-        rightSlider.onValueChange = [this] {};
-        //rightSlider.setTooltip(TRANS ("Direct signal attenuation"));
-        addAndMakeVisible(rightSlider);
-        
-        leftSlider.setName("leftSlider");
-        leftSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
-        leftSlider.setRange(-100.0f, 100.0f);
-        leftSlider.setValue(-100.0f);
-        leftSlider.onValueChange = [this] { if (leftSlider.getValue() <= -2.7f)
+        hdphnzSlider.setName("leftSlider");
+        hdphnzSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
+        hdphnzSlider.setRange(-100.0f, 100.0f);
+        hdphnzSlider.setValue(-100.0f);
+        hdphnzSlider.setMouseDragSensitivity(500.0f);
+        hdphnzSlider.onValueChange = [this] { if (hdphnzSlider.getValue() > -2.7f)
                                             {
-                                                rightSlider.setValue( -leftSlider.getValue());
+                                               hdphnzSlider.setValue(-2.7f);
                                             }
-                                            else
-                                            {
-                                                leftSlider.setValue(-2.7f);
-                                                rightSlider.setValue(-2.7f);
-                                            }
-                                            updateEditorValues(leftSlider.getValue());
+                                            updateEditorValues(hdphnzSlider.getValue());
                                           };
-        //rightSlider.setTooltip(TRANS ("Direct signal attenuation"));
-        addAndMakeVisible(leftSlider);
-        
-        rightSlider.setLookAndFeel(&rightLookAndFeel);
-        leftSlider.setLookAndFeel(&leftLookAndFeel);
+        addAndMakeVisible(hdphnzSlider);
+        hdphnzSlider.setLookAndFeel(&hdphnzLookAndFeel);
     }
     ~ISInterface()
     {
         childrenOfGUI = {};
     }
+    
 //==============================================================================
 
     void paint(Graphics& g) override
@@ -96,8 +112,7 @@ public:
         g.drawRoundedRectangle (bounds.toFloat(), 5, 2);
         dials = bounds.removeFromTop(20);
         
-        rightSlider.setBounds(bounds);
-        leftSlider.setBounds(bounds);
+        hdphnzSlider.setBounds(bounds);
 
     }
 //==============================================================================
@@ -127,10 +142,8 @@ private:
     void updateEditorValues(float position)
     {
         // position varie from -100.0f (uncrossfeeded) to 0.0f (fully crossfeeded, hence mono)
-        DBG("Position: " << position);
         
         float normalizedPosition = (position + 97.3f) / 97.3f;
-        // normalizedPosition goes from 0.0f to 1.0f
         
         Slider* delaySlider           = getSlider("delaySlider");
         Slider* qSlider               = getSlider("qSlider");
@@ -148,40 +161,41 @@ private:
         else
         {
             float directGainNormalizedPosition = (position + 45.0f)/42.3f;
-            directGainSlider->setValue(0.0f - (3.0f
+            directGainSlider->setValue( 0.0f - (3.0f
                                    * (sin((-90.0f + (180.0f * directGainNormalizedPosition)) * MathConstants<float>::pi / 180.0f) + 1.0f) / 2.0f));
         }
+        
         // crossfeed gain should go from -10.0dB to 0.0dB
-        xfeedGainSlider->setValue( -10.0f + 7.2f * normalizedPosition);
+        xfeedGainSlider->setValue(      -10.0f + 7.2f * normalizedPosition);
         
         // Total delay should go from around 500 to 0 microseconds
         if (position == -100.0f)
-            delaySlider->setValue(0.0f);
+            delaySlider->setValue(      0.0f);
         else if (position > -100.0f and position < -47.78f)
         {
             float delayNormalizedPosition = (position + 47.78f) / 52.22f;
-            delaySlider->setValue(delaySlider->getMaximum() - (delaySlider->getMaximum() - delaySlider->getMinimum())
+            delaySlider->setValue(      delaySlider->getMaximum() - (delaySlider->getMaximum() - delaySlider->getMinimum())
                                    * cos(180.0f * delayNormalizedPosition * MathConstants<float>::pi / 180.0f));
         }
         
         // Direct filter Intensity should go from 0 to a maximum to a low value again at the end
-        separationSlider->setValue(separationSlider->getMaximum() - (separationSlider->getMaximum() - separationSlider->getMinimum() / 3.0f)
+        separationSlider->setValue(     separationSlider->getMaximum() - (separationSlider->getMaximum() - separationSlider->getMinimum() / 3.0f)
                                    * sin(170.0f * normalizedPosition * MathConstants<float>::pi / 180.0f));
         // Crossfeed filter Intensity should go from high to minimal
         xfeedSeparationSlider->setValue(xfeedSeparationSlider->getMaximum() - (xfeedSeparationSlider->getMaximum() - xfeedSeparationSlider->getMinimum())
                                    * sin(170.0f * normalizedPosition * MathConstants<float>::pi / 180.0f));
         // Direct filter freq is irrelevant at first, and could stay very low (300?)
-        frequencySlider->setValue(frequencySlider->getMinimum() + (frequencySlider->getMaximum() - frequencySlider->getMinimum()) / 4.0f
+        frequencySlider->setValue(      frequencySlider->getMinimum() + (frequencySlider->getMaximum() - frequencySlider->getMinimum()) / 4.0f
                                    * sin(180.0f * normalizedPosition * MathConstants<float>::pi / 180.0f));
         // Crossfeed filter freq could begin quite high and could go back to very low at the end (300)
         xfeedFrequencySlider->setValue(xfeedFrequencySlider->getMaximum() - (xfeedFrequencySlider->getMaximum() - xfeedFrequencySlider->getMinimum())
-                                   * (normalizedPosition * normalizedPosition));
+                                   * (  normalizedPosition * normalizedPosition));
         // Direct Q is irrelevant at the beginning, could stay low for all position
-        qSlider->setValue(qSlider->getMinimum() + (qSlider->getMaximum() - qSlider->getMinimum()) / 4.0f
+        qSlider->setValue(              qSlider->getMinimum() + (qSlider->getMaximum() - qSlider->getMinimum()) / 4.0f
                                    * sin(180.0f * normalizedPosition * MathConstants<float>::pi / 180.0f));
         
         // Crossfeed Q filter should be hard at first and smooth out at the end
-        xfeedQSlider->setValue(xfeedQSlider->getMaximum()*2.0f/3.0f - (xfeedQSlider->getMaximum() - xfeedQSlider->getMinimum()) / 3.0f
+        xfeedQSlider->setValue(         xfeedQSlider->getMaximum() * 2.0f / 3.0f - (xfeedQSlider->getMaximum() - xfeedQSlider->getMinimum()) / 3.0f
                                    * sin(180.0f * normalizedPosition * MathConstants<float>::pi / 180.0f));
     }
 
@@ -193,14 +207,10 @@ private:
     
     Rectangle<int> bounds;
     Rectangle<int> dials;
-    // These must be declared before the components using them
-    RightLookAndFeel rightLookAndFeel;
-    LeftLookAndFeel leftLookAndFeel;
+    // This must be declared before the component using it
+    HdphnzLookAndFeel hdphnzLookAndFeel;
 
-    
-    Slider rightSlider { Slider::RotaryVerticalDrag, Slider::NoTextBox };
-    Slider leftSlider { Slider::RotaryVerticalDrag, Slider::NoTextBox };
-    
+    Slider hdphnzSlider { Slider::RotaryVerticalDrag, Slider::NoTextBox };
     
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ISInterface)
