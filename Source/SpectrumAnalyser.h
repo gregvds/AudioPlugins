@@ -12,7 +12,10 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 
 
-static Colour outColour = Colour(0xFFe5e27e);
+static Colour outColour       = Colour(0xFFe5e27e);
+static Colour leftSpectrumColour      = Colour(0x881E90FF);
+static Colour rightSpectrumColour     = Colour(0x88FF8C00);
+
 
 //==============================================================================
 /**
@@ -43,7 +46,11 @@ public:
     */
     SpectrumAnalyser()
         : forwardFFT (fftOrder),
-          window (fftSize, dsp::WindowingFunction<float>::rectangular )
+          //leftForwardFFT (fftOrder),
+          //rightForwardFFT (fftOrder),
+          window (fftSize, dsp::WindowingFunction<float>::rectangular ),
+          leftWindow (fftSize, dsp::WindowingFunction<float>::rectangular ),
+          rightWindow (fftSize, dsp::WindowingFunction<float>::rectangular )
     {
 
         startTimerHz (30);
@@ -55,6 +62,12 @@ public:
         {
             scopeDataFreqs[i] = fftFrequencyStep * (float) i/var2;
         }
+        
+        displayDifferenceToggleButton.setName("displayDifferenceToggleButton");
+        displayDifferenceToggleButton.setToggleState (false, NotificationType::dontSendNotification);
+        displayDifferenceToggleButton.setClickingTogglesState(true);
+        addAndMakeVisible(displayDifferenceToggleButton);
+
         
         // editable fields
         minDBEditor.setRange (-100.0f, -60.0f);
@@ -99,7 +112,13 @@ public:
         frequencyScaleTypeMenu.setTooltip(TRANS ("Frequency scale choice"));
         addAndMakeVisible(frequencyScaleTypeMenu);
 
-        
+        colourModeMenu.addItem("fill", 1);
+        colourModeMenu.addItem("gradient", 2);
+        colourModeMenu.setSelectedId(2);
+        colourModeMenu.setJustificationType(Justification::centred);
+        colourModeMenu.onChange = [this] {repaint(); };
+        colourModeMenu.setTooltip(TRANS ("Colour mode choice"));
+        addAndMakeVisible(colourModeMenu);
     }
     
     ~SpectrumAnalyser()
@@ -133,9 +152,11 @@ public:
     {
         if (buffer.getNumChannels() > 0)
         {
-            auto* channelData = buffer.getReadPointer (0);
+            //DBG("Number of Channels: " << buffer.getNumChannels());
+            auto* leftChannelData  = buffer.getReadPointer(0);
+            auto* rightChannelData = buffer.getReadPointer(1);
             for (auto i = 0; i < buffer.getNumSamples(); ++i)
-                pushNextSampleIntoFifo (channelData[i]);
+                pushNextSampleIntoFifo (leftChannelData[i],  rightChannelData[i]);
         }
     }
     
@@ -160,7 +181,7 @@ public:
         We also set a flag to say that the next frame should now be rendered and always reset the index to 0 to start filling the fifo again.
  [12]: Every time this function gets called, a sample is stored in the fifo and the index is incremented.
 */
-    void pushNextSampleIntoFifo (float sample) noexcept
+    void pushNextSampleIntoFifo (float leftSample, float rightSample) noexcept
     {
         // if the fifo contains enough data, set a flag to say
         // that the next frame should now be rendered..
@@ -168,13 +189,17 @@ public:
         {
             if (! nextFFTBlockReady) // [12]
             {
-                zeromem (fftData, sizeof (fftData));
-                memcpy (fftData, fifo, sizeof (fifo));
+                zeromem (fftData[0], sizeof (fftData[0]));
+                zeromem (fftData[1], sizeof (fftData[1]));
+                memcpy (fftData[0], fifo[0], sizeof (fifo[0]));
+                memcpy (fftData[1], fifo[1], sizeof (fifo[1]));
                 nextFFTBlockReady = true;
             }
             fifoIndex = 0;
         }
-        fifo[fifoIndex++] = sample;  // [12]
+        int newFifoIndex = fifoIndex++;
+        fifo[0][newFifoIndex] = leftSample;  // [12]
+        fifo[1][newFifoIndex] = rightSample;  // [12]
    }
     
 /*
@@ -189,11 +214,17 @@ public:
 */
     void drawNextFrameOfSpectrum()
     {
-        window.multiplyWithWindowingTable (fftData, fftSize);      // [1]
-        forwardFFT.performFrequencyOnlyForwardTransform (fftData); // [2]
+        // Why on Earth here do I have to apply FIRST Window to fftData[1] and THEN
+        // to fftData[0] in order to avoid fftData[1] not to be emptied, I have
+        // NO IDEA?!?!
+        window.multiplyWithWindowingTable (fftData[0], fftSize);      // [1]
+        window.multiplyWithWindowingTable (fftData[1], fftSize);      // [1]
+        forwardFFT.performFrequencyOnlyForwardTransform (fftData[0]); // [2]
+        forwardFFT.performFrequencyOnlyForwardTransform (fftData[1]); // [2]
         for (int i = 0; i < scopeSize; ++i)                        // [3] from 0 to 1023
         {
-            scopeData[i] = getLevelFromFFT(getFFTDataIndex(fftSize, i), fftSize);
+            scopeData[0][i] = getLevelFromFFT(getFFTDataIndex(fftSize, i), fftSize, 0);
+            scopeData[1][i] = getLevelFromFFT(getFFTDataIndex(fftSize, i), fftSize, 1);
         }
     }
 /*
@@ -206,20 +237,59 @@ public:
         auto width  = drawingArea.getWidth();
         auto height = drawingArea.getHeight();
 
-        g.setGradientFill(ColourGradient(outColour, x, y, Colours::transparentWhite, x, y + height, false));
+        Path leftSpectrum;
+        Path rightSpectrum;
+        Path diffSpectrum;
 
-        Path p;
-        p.startNewSubPath(3.0f, y + height);
-                
+        leftSpectrum.startNewSubPath(3.0f, y + height);
+        rightSpectrum.startNewSubPath(3.0f, y + height);
+        diffSpectrum.startNewSubPath(3.0f, y + height / 2.0f);
+
+        float leftX1;
+        float leftY1;
+        float rightX1;
+        float rightY1;
+        float diffX1;
+        float diffY1;
         for (int i = 0; i < scopeSize; i++)
         {
-            float x1 = (float) jmap (getPositionForFrequency(scopeDataFreqs[i]), 0.0f,   1.0f,            3.0f, (float) width + 3.0f) + 1.0f;
-            float y1 = jmap (jlimit(0.0f, 1.0f, scopeData[i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
-            p.lineTo(x1, y1);
+            leftX1 = (float) jmap (getPositionForFrequency(scopeDataFreqs[i]), 0.0f,   1.0f,            3.0f, (float) width + 3.0f) + 1.0f;
+            leftY1 = jmap (jlimit(0.0f, 1.0f, scopeData[0][i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
+            leftSpectrum.lineTo(leftX1, leftY1);
+            rightX1 = (float) jmap (getPositionForFrequency(scopeDataFreqs[i]), 0.0f,   1.0f,            3.0f, (float) width + 3.0f) + 1.0f;
+            rightY1 = jmap (jlimit(0.0f, 1.0f, scopeData[1][i]),     0.0f,   1.0f,                   (float) y + height, y + 0.0f);
+            rightSpectrum.lineTo(rightX1, rightY1);
+            diffX1 = (float) jmap (getPositionForFrequency(scopeDataFreqs[i]), 0.0f,   1.0f,            3.0f, (float) width + 3.0f) + 1.0f;
+            diffY1 = jmap (jlimit(-1.0f, 1.0f, scopeData[0][i] - scopeData[1][i]),     -1.0f,   1.0f,                   (float) y + height, y + 0.0f);
+            diffSpectrum.lineTo(diffX1, diffY1);
         }
-        p.lineTo(width + 3.0f, y + height);
-        p.closeSubPath();
-        g.fillPath (p);
+
+        leftSpectrum.lineTo(width + 3.0f, y + height);
+        leftSpectrum.closeSubPath();
+        rightSpectrum.lineTo(width + 3.0f, y + height);
+        rightSpectrum.closeSubPath();
+        diffSpectrum.lineTo(width + 3.0f, y + height / 2.0f);
+        diffSpectrum.closeSubPath();
+
+        int colourMode = colourModeMenu.getSelectedId();
+        int diffActive = displayDifferenceToggleButton.getToggleState();
+        if (colourMode == 1)
+            g.setColour(leftSpectrumColour);
+        else
+            g.setGradientFill(ColourGradient(leftSpectrumColour, x, y, Colours::transparentWhite, x, y + height, false));
+        g.fillPath (leftSpectrum);
+
+        if (colourMode == 1)
+            g.setColour(rightSpectrumColour);
+        else
+            g.setGradientFill(ColourGradient(rightSpectrumColour, x, y, Colours::transparentWhite, x, y + height, false));
+        g.fillPath (rightSpectrum);
+        
+        if (diffActive == true)
+        {
+            g.setColour(Colours::silver);
+            g.fillPath (diffSpectrum);
+        }
     }
 
     void paint(Graphics& g) override
@@ -236,7 +306,9 @@ public:
         
         //fftWindowTypeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
         frequencyScaleTypeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
-        
+        colourModeMenu.setBounds(fieldBar.removeFromLeft(TEXTBOXWIDTH).reduced(3,0));
+        displayDifferenceToggleButton.setBounds(fieldBar.removeFromRight(TEXTBOXWIDTH));
+
         drawFrame(g);
 
         // Silver frame around RT spectrum analysis
@@ -294,11 +366,11 @@ public:
         return jlimit (0, fftSize / 2, (int) ((float)i/var3));
     }
     
-    float getLevelFromFFT(int fftDataIndex, int fftSize)
+    float getLevelFromFFT(int fftDataIndex, int fftSize, int channelIndex)
     {
         return jmap (jlimit (mindB,
                              maxdB,
-                             Decibels::gainToDecibels (fftData[fftDataIndex])
+                             Decibels::gainToDecibels (fftData[channelIndex][fftDataIndex])
                              - Decibels::gainToDecibels ((float) fftSize)
                              ),
                      mindB,
@@ -353,18 +425,27 @@ private:
     double mSampleRate { 44100 };
     
     dsp::FFT forwardFFT;                  // [4]
+    //dsp::FFT leftForwardFFT;                  // [4]
+    //dsp::FFT rightForwardFFT;                  // [4]
     dsp::WindowingFunction<float> window; // [5]
-    float fifo [fftSize];                 // [6]
-    float fftData [2 * fftSize];          // [7]
+    dsp::WindowingFunction<float> leftWindow; // [5]
+    dsp::WindowingFunction<float> rightWindow; // [5]
+    float fifo [2][fftSize];                 // [6]
+    float fftData [2][2 * fftSize];          // [7]
     int fifoIndex = 0;                    // [8]
     bool nextFFTBlockReady = false;       // [9]
-    float scopeData [scopeSize];          // [10]
+    float scopeData [2][scopeSize];          // [10]
+    float scopeDiffData [scopeSize];
     float scopeDataFreqs [scopeSize];
     float fftFrequencyStep = (float) mSampleRate / ((float) fftSize / 2.0f);
     
     float mindB = -100.0f;
     float maxdB =    0.0f;
     float graph1DBRange = maxdB - mindB;
+    
+    float diffMinDB = -10.0f;
+    float diffMaxDB = 10.0f;
+    float graph2DBRange = diffMaxDB - diffMinDB;
 
     
     float minFreq      = 20.0f;
@@ -381,11 +462,13 @@ private:
     LinearBarLookAndFeel2 linearBarLookAndFeel2;
     
     float var1        = 1.0f;
-    float var2        = 2.0f;
+    float var2        = 1.0f;
     float var3        = 1.0f;
     
     ComboBox fftWindowTypeMenu;
     ComboBox frequencyScaleTypeMenu;
+    ComboBox colourModeMenu;
+    ToggleButton displayDifferenceToggleButton { "L-R diff" };
     
     Slider minDBEditor { Slider::LinearBar, Slider::TextBoxAbove };
     Slider maxDBEditor { Slider::LinearBar, Slider::TextBoxAbove };

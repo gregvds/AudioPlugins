@@ -12,8 +12,9 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 
-static Colour leftColour      = Colour(0xFF00BFFF);
-static Colour rightColour     = Colour(0xFF1E90FF);
+//static Colour leftColour      = Colour(0xFF00BFFF);
+static Colour leftColour      = Colour(0xFF1E90FF);
+static Colour rightColour     = Colour(0xFFFF8C00);
 static Colour transparent     = Colour(0x00FFFFFF);
 
 
@@ -38,8 +39,7 @@ public:
 
         float centerX = x + width / 2.0f;
         float centerY = y + height / 2.0f;
-        float leftAngle = MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi;
-        float rightAngle = -1.0f * (MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi);
+        float angle = MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi;
         float rotationAngle = sliderPositionProportional * (rotaryEndAngle - rotaryStartAngle);
         
         Path backgroundArc;
@@ -62,10 +62,10 @@ public:
         headphoneTransducer.addEllipse(-15, -11, 30, 12);
         
         g.setColour(leftColour);
-        g.fillPath(headphoneTransducer, AffineTransform::rotation(leftAngle).translated(centerX + radius * sin(rotaryStartAngle + rotationAngle), centerY - radius * cos(rotaryStartAngle + rotationAngle)));
+        g.fillPath(headphoneTransducer, AffineTransform::rotation(angle).translated(centerX + radius * sin(rotaryStartAngle + rotationAngle), centerY - radius * cos(rotaryStartAngle + rotationAngle)));
 
         g.setColour(rightColour);
-        g.fillPath(headphoneTransducer, AffineTransform::rotation(rightAngle).translated(centerX + radius * sin(rotaryEndAngle - rotationAngle), centerY - radius * cos(rotaryEndAngle - rotationAngle)));
+        g.fillPath(headphoneTransducer, AffineTransform::rotation(-angle).translated(centerX + radius * sin(rotaryEndAngle - rotationAngle), centerY - radius * cos(rotaryEndAngle - rotationAngle)));
 
     }
 };
@@ -79,7 +79,7 @@ public:
         setOpaque (true);
         tooltipWindow->setMillisecondsBeforeTipAppears (500);
         
-        hdphnzSlider.setName("leftSlider");
+        hdphnzSlider.setName("hdphnzSlider");
         hdphnzSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
         hdphnzSlider.setRange(-100.0f, 100.0f);
         hdphnzSlider.setValue(-100.0f);
