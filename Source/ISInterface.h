@@ -60,6 +60,7 @@ public:
         headphoneTransducer.addTriangle(-20, -6, 20, -6, 0, 10);
         headphoneTransducer.addRectangle(-20, -9, 40, 3);
         headphoneTransducer.addEllipse(-15, -11, 30, 12);
+        //headphoneTransducer.addRectangle(-1, -250, 2, 250);
         
         g.setColour(leftColour);
         g.fillPath(headphoneTransducer, AffineTransform::rotation(angle).translated(centerX + radius * sin(rotaryStartAngle + rotationAngle), centerY - radius * cos(rotaryStartAngle + rotationAngle)));

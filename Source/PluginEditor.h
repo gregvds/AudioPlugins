@@ -202,7 +202,7 @@ private:
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
     Rectangle<int> bounds;
-    Rectangle<int> topPanel;
+    //Rectangle<int> topPanel;
     Rectangle<int> menu;
     Rectangle<int> dials;
     Rectangle<int> directSliders;
@@ -213,10 +213,15 @@ private:
     Rectangle<int> slider4;
     Rectangle<int> slider5;
     Rectangle<int> slider6;
+    
+    Rectangle<int> basePanel;
+    Rectangle<int> iSIPanel;
+    Rectangle<int> displayPanel1;
+    Rectangle<int> displayPanel2;
 
-    Rectangle<int> leftSpectrumPart;
-    Rectangle<int> spectrumFrame1;
-    Rectangle<int> spectrumFrame2;
+    //Rectangle<int> leftSpectrumPart;
+    //Rectangle<int> spectrumFrame1;
+    //Rectangle<int> spectrumFrame2;
     
     bool firstRun = true;
     

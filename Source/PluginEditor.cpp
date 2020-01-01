@@ -25,7 +25,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     // Size is dynamic regarding the number of objects
-    //setResizable (true, true);
+    setResizable (true, true);
     setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT);
     
     activeStateToggleButton.setName("activeStateToggleButton");
@@ -384,14 +384,58 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     g.fillAll (getLookAndFeel().findColour (ResizableWindow::backgroundColourId));
 
     bounds = getLocalBounds();
-    topPanel = bounds.removeFromLeft(4*DIALSIZE);
+    basePanel = bounds;
     
-    if (guiLayoutMenu.getSelectedId() == 4)
+    if (guiLayoutMenu.getSelectedId() == 1)
     {
-        leftSpectrumPart = topPanel.removeFromBottom(SPECTRUMHEIGHT);
+        basePanel = bounds;
+        
+        spectrumAnalyser.setVisible(false);
+        filterGraphics.setVisible(false);
+        iSInterface.setVisible(false);
+    }
+    else if (guiLayoutMenu.getSelectedId() == 2 or guiLayoutMenu.getSelectedId() == 3)
+    {
+        basePanel = bounds.removeFromLeft(4*DIALSIZE);
+        displayPanel1 = bounds;
+        
+        iSInterface.setVisible(false);
+        if (guiLayoutMenu.getSelectedId() == 2)
+        {
+            spectrumAnalyser.setVisible(false);
+            filterGraphics.setBounds(displayPanel1);
+            filterGraphics.setVisible(true);
+        }
+        else
+        {
+            filterGraphics.setVisible(false);
+            spectrumAnalyser.setBounds(displayPanel1);
+            spectrumAnalyser.setVisible(true);
+        }
+        iSInterface.setVisible(false);
+
+    }
+    else if (guiLayoutMenu.getSelectedId() == 4)
+    {
+        auto leftPanels = bounds.removeFromLeft(4*DIALSIZE);
+        
+        basePanel = leftPanels.removeFromTop(3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT);
+        iSIPanel = leftPanels;
+        
+        displayPanel1 = bounds.removeFromTop(bounds.getHeight()*2/3);
+        displayPanel2 = bounds;
+        
+        filterGraphics.setBounds(displayPanel1);
+        spectrumAnalyser.setBounds(displayPanel2);
+        iSInterface.setBounds(iSIPanel);
+        spectrumAnalyser.setVisible(true);
+        filterGraphics.setVisible(true);
+        iSInterface.setVisible(true);
     }
     
-    menu = topPanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
+    // Display of dials and settings in basePanel
+    
+    menu = basePanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
     
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
     //preferencesButton.setBounds(menu.removeFromLeft(DIALSIZE));
@@ -399,15 +443,15 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     activeStateToggleButton.setBounds(menu.removeFromRight(DIALSIZE));
     
     g.setColour (Colours::silver);
-    topPanel = topPanel.reduced(3,3);
-    g.drawRoundedRectangle (topPanel.toFloat(), 5, 2);
-    topPanel = topPanel.reduced(0,3);
+    basePanel = basePanel.reduced(3,3);
+    g.drawRoundedRectangle (basePanel.toFloat(), 5, 2);
+    basePanel = basePanel.reduced(0,3);
     
-    int sliderSize = topPanel.getWidth()/4;
+    int sliderSize = basePanel.getWidth()/4;
     
-    dials = topPanel.removeFromLeft(sliderSize);
-    directSliders = topPanel.removeFromTop(topPanel.getHeight() / 2);
-    xfeedSliders  = topPanel.removeFromTop(topPanel.getHeight());
+    dials = basePanel.removeFromLeft(sliderSize);
+    directSliders = basePanel.removeFromTop(basePanel.getHeight() / 2);
+    xfeedSliders  = basePanel.removeFromTop(basePanel.getHeight());
     slider1 = directSliders.removeFromLeft(sliderSize);
     slider2 = directSliders.removeFromLeft(sliderSize);
     slider3 = directSliders.removeFromLeft(sliderSize);
@@ -438,37 +482,6 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     xfeedQLabel.setBounds(slider6.removeFromTop(LABELHEIGHT));
     xfeedQSlider.setBounds(slider6);
     
-    if (guiLayoutMenu.getSelectedId() == 1)
-    {
-        spectrumAnalyser.setVisible(false);
-        filterGraphics.setVisible(false);
-    }
-    if (guiLayoutMenu.getSelectedId() == 2)
-    {
-        spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
-        filterGraphics.setBounds(spectrumFrame1);
-        spectrumAnalyser.setVisible(false);
-        filterGraphics.setVisible(true);
-    }
-    else if (guiLayoutMenu.getSelectedId() == 3)
-    {
-        spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
-        spectrumAnalyser.setBounds(spectrumFrame1);
-        filterGraphics.setVisible(false);
-        spectrumAnalyser.setVisible(true);
-    }
-    else if (guiLayoutMenu.getSelectedId() == 4)
-    {
-        spectrumFrame2 = bounds.removeFromBottom(SPECTRUMHEIGHT);
-        spectrumFrame1 = bounds.removeFromRight(SPECTRUMWIDTH);
-        //spectrumFrame2.enlargeIfAdjacent(leftSpectrumPart);
-        filterGraphics.setBounds(spectrumFrame1);
-        spectrumAnalyser.setBounds(spectrumFrame2);
-        iSInterface.setBounds(leftSpectrumPart);
-        spectrumAnalyser.setVisible(true);
-        filterGraphics.setVisible(true);
-        iSInterface.setVisible(true);
-    }
 }
 
 void GainSliderAudioProcessorEditor::resized()
