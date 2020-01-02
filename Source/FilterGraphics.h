@@ -1,10 +1,22 @@
-//
-//  FilterGraphics.h
-//  PAF
-//
-//  Created by Grégoire Vandenschrick on 06/05/2019.
-//  Copyright © 2019 Greg. All rights reserved.
-//
+/*
+  ==============================================================================
+
+    FilterGraphics.h
+    Created: 06 May 2019
+    Author:  Grégoire Vandenschrick
+
+    FiltareGraphics is a graphical representation of gain and phase vs frequency
+    of the filters applied to the direct and crossfeed signals. It offers several
+    representation settings, and is fully interactive, letting the user move the
+    elements in the diagrams and updating the dials and settings in the PluginEditor.
+ 
+    Classes defined:
+        LinearBarLookAndFeel
+        FilterGraphics
+
+  ==============================================================================
+*/
+
 #pragma once
 
 #include "../JuceLibraryCode/JuceHeader.h"

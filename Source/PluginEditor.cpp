@@ -26,6 +26,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     // editor's size to whatever you need it to be.
     // Size is dynamic regarding the number of objects
     setResizable (true, true);
+    setBufferedToImage(true);
     setSize (4* DIALSIZE + SPECTRUMWIDTH, 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT + SPECTRUMHEIGHT);
     
     activeStateToggleButton.setName("activeStateToggleButton");

@@ -24,10 +24,6 @@
 #define SPECTRUMWIDTH 800
 #define SPECTRUMHEIGHT 300
 
-//static Colour xfeedColour = Colour(0xFFe5d865);
-////Colour directColour = Colour(0xFFe5e27e);
-//static Colour directColour = Colour(0xFFfbb040);
-
 //==============================================================================
 /**
  Classes to contain look and feel customizations for different types of sliders

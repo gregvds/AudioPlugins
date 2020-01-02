@@ -4,6 +4,16 @@
     ISInterface.h
     Created: 30 Dec 2019 11:41:21am
     Author:  Grégoire Vandenschrick
+ 
+    ISIinterface is a basic spatial representation of transducers position offering
+    modification of their placement. This automates all the dials and settings
+    offered by the PluginEditor.
+ 
+    classes defined:
+        HdphnzLookAndFeel LookAndFeel_V4 based class
+            overriding drawRotarySlider
+ 
+        ISInterface
 
   ==============================================================================
 */
@@ -32,16 +42,19 @@ public:
     void drawRotarySlider (Graphics &g, int x, int y, int width, int height, float sliderPositionProportional, float rotaryStartAngle, float rotaryEndAngle, Slider &slider) override
     {
         auto outline = slider.findColour (Slider::rotarySliderOutlineColourId);
-        auto bounds = Rectangle<int> (x, y, width, height).toFloat().reduced (10);
+        auto bounds = Rectangle<int> (x, y+5, width, height).toFloat().reduced (15.0f);
         auto radius = jmin (bounds.getWidth(), bounds.getHeight()) / 2.0f;
         auto lineW = jmin (8.0f, radius * 0.5f);
         auto arcRadius = radius - lineW * 0.5f;
 
-        float centerX = x + width / 2.0f;
-        float centerY = y + height / 2.0f;
+        
+        float centerX = bounds.getCentreX();
+        float centerY = bounds.getCentreY();
         //float angle = MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi;
         float rotationAngle = sliderPositionProportional * (rotaryEndAngle - rotaryStartAngle);
         float angle = MathConstants<float>::halfPi + ( atan (( cos (rotaryStartAngle) - cos (rotaryStartAngle + rotationAngle) ) / ( sin (rotaryStartAngle + rotationAngle) )) );
+        
+        //DBG("Tilt angle and position: " << (angle * 180.0f / MathConstants<float>::pi) - 90.0f << ", " << (sliderPositionProportional * (200.0f)- 100.0f));
         
         // Track of moving sources
         Path backgroundArc;
@@ -53,7 +66,6 @@ public:
                                      rotaryStartAngle,
                                      rotaryEndAngle,
                                      true);
-
         g.setColour (outline);
         g.strokePath (backgroundArc, PathStrokeType (lineW, PathStrokeType::curved, PathStrokeType::rounded));
         
@@ -72,14 +84,7 @@ public:
         headphoneTransducer.addRectangle(-20, -9, 40, 3);
         headphoneTransducer.addEllipse(-15, -11, 30, 12);
         //headphoneTransducer.addRectangle(-1, -250, 2, 250);
-        
-        /*
-        DBG("Angle of transducers" << angle * 180.0f / MathConstants<float>::pi);
-        DBG("Angle of Position" << rotationAngle * 180.0f / MathConstants<float>::pi);
-        DBG("Angle of first Position" << rotaryStartAngle * 180.0f / MathConstants<float>::pi);
-        DBG("Angle of last Position" << rotaryEndAngle * 180.0f / MathConstants<float>::pi);
-        */
-        
+                
         g.setColour(leftColour);
         g.fillPath(headphoneTransducer, AffineTransform::rotation(angle).translated(centerX + radius * sin(rotaryStartAngle + rotationAngle), centerY - radius * cos(rotaryStartAngle + rotationAngle)));
 
@@ -103,17 +108,60 @@ public:
         setOpaque (true);
         tooltipWindow->setMillisecondsBeforeTipAppears (500);
         
+        settingsMenu.addItem("Headphones", 1);
+        settingsMenu.addItem("Wide", 5);
+        settingsMenu.addItem("Equilateral", 3);
+        settingsMenu.addItem("B = H", 2);
+        settingsMenu.addItem("Narrow", 6);
+        settingsMenu.addItem("pseudo mono", 4);
+        settingsMenu.setSelectedId(1);
+        settingsMenu.setJustificationType(Justification::centred);
+        settingsMenu.setTooltip(TRANS ("Position choices"));
+        settingsMenu.onChange = [this] { if ( settingsMenu.getSelectedId() == 1 )
+                                         {
+                                             hdphnzSlider.setValue(-100.0f);
+                                             getToggleButton("activeStateToggleButton")->setToggleState(false, NotificationType::sendNotification) ;
+                                         }
+                                         else if ( settingsMenu.getSelectedId() == 2 )
+                                         {
+                                             hdphnzSlider.setValue(-33.1778246100f);
+                                             getToggleButton("activeStateToggleButton")->setToggleState(true, NotificationType::sendNotification) ;
+                                         }
+                                         else if ( settingsMenu.getSelectedId() == 3 )
+                                         {
+                                             hdphnzSlider.setValue(-37.4030205020f);
+                                             getToggleButton("activeStateToggleButton")->setToggleState(true, NotificationType::sendNotification) ;
+                                         }
+                                         else if ( settingsMenu.getSelectedId() == 4 )
+                                         {
+                                             hdphnzSlider.setValue(-2.7f);
+                                             getToggleButton("activeStateToggleButton")->setToggleState(true, NotificationType::sendNotification) ;
+                                         }
+                                         else if ( settingsMenu.getSelectedId() == 5 )
+                                         {
+                                             hdphnzSlider.setValue(-63.71f);
+                                             getToggleButton("activeStateToggleButton")->setToggleState(true, NotificationType::sendNotification) ;
+                                         }
+                                         else if ( settingsMenu.getSelectedId() == 6 )
+                                         {
+                                             hdphnzSlider.setValue(-23.45f);
+                                             getToggleButton("activeStateToggleButton")->setToggleState(true, NotificationType::sendNotification) ;
+                                         }
+                                       };
+        addAndMakeVisible(settingsMenu);
+
+        
         hdphnzSlider.setName("hdphnzSlider");
         hdphnzSlider.setSliderStyle(Slider::SliderStyle::RotaryVerticalDrag);
         hdphnzSlider.setRange(-100.0f, 100.0f);
         hdphnzSlider.setValue(-100.0f);
         hdphnzSlider.setMouseDragSensitivity(500.0f);
         hdphnzSlider.onValueChange = [this] { if (hdphnzSlider.getValue() > -2.7f)
-                                            {
-                                               hdphnzSlider.setValue(-2.7f);
-                                            }
+                                                {
+                                                   hdphnzSlider.setValue(-2.7f);
+                                                }
                                             updateEditorValues(hdphnzSlider.getValue());
-                                          };
+                                            };
         addAndMakeVisible(hdphnzSlider);
         hdphnzSlider.setLookAndFeel(&hdphnzLookAndFeel);
     }
@@ -132,13 +180,15 @@ public:
         bounds = getLocalBounds();
         
         g.setColour (Colours::silver);
+        //bounds = bounds.reduced(3,3);
+        menu = bounds.removeFromTop(20).reduced(3,0);
         bounds = bounds.reduced(3,3);
+        settingsMenu.setBounds(menu.removeFromLeft(100));
         g.drawRoundedRectangle (bounds.toFloat(), 5, 2);
-        dials = bounds.removeFromTop(20);
-        
         hdphnzSlider.setBounds(bounds);
 
     }
+
 //==============================================================================
 
 //==============================================================================
@@ -161,7 +211,54 @@ private:
         return nullptr;
         
     }
+
+    ToggleButton* getToggleButton(String name)
+    {
+        if (childrenOfGUI.size() == 0)
+        {
+            DBG("Refilling childrenOfGUI...");
+            childrenOfGUI = this->getParentComponent()->getChildren();
+        }
+        for (int i = 0; i < childrenOfGUI.size(); i++)
+        {
+            if (childrenOfGUI[i]->getName() == name)
+            {
+                return static_cast<ToggleButton*>(childrenOfGUI[i]);
+            }
+        }
+        return nullptr;
+        
+    }
     
+    void blurPlugin(bool shouldBeBlurred)
+    {
+        if (childrenOfGUI.size() == 0)
+        {
+            DBG("Refilling childrenOfGUI...");
+            childrenOfGUI = this->getParentComponent()->getChildren();
+        }
+        if (shouldBeBlurred == true)
+        {
+            //for (int i = 0; i < childrenOfGUI.size(); i++)
+            //{
+                GlowEffect blur = GlowEffect();
+                ImageEffectFilter * blurPointer = &blur;
+                
+                getSlider("delaySlider")->setComponentEffect(blurPointer);
+                
+                
+            //}
+        }
+        else
+        {
+            for (int i = 0; i < childrenOfGUI.size(); i++)
+            {
+                childrenOfGUI[i]->setComponentEffect(nullptr);
+            }
+
+        }
+    }
+
 //==============================================================================
     void updateEditorValues(float position)
     {
@@ -178,6 +275,7 @@ private:
         Slider* xfeedSeparationSlider = getSlider("xfeedSeparationSlider");
         Slider* directGainSlider      = getSlider("directGainSlider");
         Slider* xfeedGainSlider       = getSlider("xfeedGainSlider");
+        ToggleButton* activeStateToggleButton = getToggleButton("activeStateToggleButton");
         
         // direct gain could never move
         if (position < -45.0f)
@@ -194,12 +292,17 @@ private:
         
         // Total delay should go from around 500 to 0 microseconds
         if (position == -100.0f)
+        {
             delaySlider->setValue(      0.0f);
+            activeStateToggleButton->setToggleState(false, NotificationType::sendNotification) ;
+            //blurPlugin(true);
+        }
         else if (position > -100.0f and position < -47.78f)
         {
             float delayNormalizedPosition = (position + 47.78f) / 52.22f;
             delaySlider->setValue(      delaySlider->getMaximum() - (delaySlider->getMaximum() - delaySlider->getMinimum())
                                    * cos(180.0f * delayNormalizedPosition * MathConstants<float>::pi / 180.0f));
+            activeStateToggleButton->setToggleState(true, NotificationType::sendNotification) ;
         }
         
         // Direct filter Intensity should go from 0 to a maximum to a low value again at the end
@@ -230,10 +333,12 @@ private:
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
     Rectangle<int> bounds;
-    Rectangle<int> dials;
+    Rectangle<int> menu;
+    
     // This must be declared before the component using it
     HdphnzLookAndFeel hdphnzLookAndFeel;
-
+    
+    ComboBox settingsMenu;
     Slider hdphnzSlider { Slider::RotaryVerticalDrag, Slider::NoTextBox };
     
 
