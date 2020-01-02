@@ -39,9 +39,11 @@ public:
 
         float centerX = x + width / 2.0f;
         float centerY = y + height / 2.0f;
-        float angle = MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi;
+        //float angle = MathConstants<float>::halfPi + sliderPositionProportional * MathConstants<float>::pi;
         float rotationAngle = sliderPositionProportional * (rotaryEndAngle - rotaryStartAngle);
+        float angle = MathConstants<float>::halfPi + ( atan (( cos (rotaryStartAngle) - cos (rotaryStartAngle + rotationAngle) ) / ( sin (rotaryStartAngle + rotationAngle) )) );
         
+        // Track of moving sources
         Path backgroundArc;
         backgroundArc.addCentredArc (bounds.getCentreX(),
                                      bounds.getCentreY(),
@@ -54,7 +56,16 @@ public:
 
         g.setColour (outline);
         g.strokePath (backgroundArc, PathStrokeType (lineW, PathStrokeType::curved, PathStrokeType::rounded));
-
+        
+        // Drawing guides
+        /*
+        g.setColour (Colours::silver);
+        g.drawRoundedRectangle(bounds, 0, 1);
+        g.drawLine(bounds.getCentreX(), bounds.getY() , bounds.getCentreX(), bounds.getBottom() , 1);
+        g.drawLine(bounds.getX(), bounds.getCentreY() , bounds.getRight() , bounds.getCentreY() , 1);
+        */
+        
+        // Sources
         Path headphoneTransducer;
         headphoneTransducer.addRectangle(-10, 0, 20, 10);
         headphoneTransducer.addTriangle(-20, -6, 20, -6, 0, 10);
@@ -62,12 +73,24 @@ public:
         headphoneTransducer.addEllipse(-15, -11, 30, 12);
         //headphoneTransducer.addRectangle(-1, -250, 2, 250);
         
+        /*
+        DBG("Angle of transducers" << angle * 180.0f / MathConstants<float>::pi);
+        DBG("Angle of Position" << rotationAngle * 180.0f / MathConstants<float>::pi);
+        DBG("Angle of first Position" << rotaryStartAngle * 180.0f / MathConstants<float>::pi);
+        DBG("Angle of last Position" << rotaryEndAngle * 180.0f / MathConstants<float>::pi);
+        */
+        
         g.setColour(leftColour);
         g.fillPath(headphoneTransducer, AffineTransform::rotation(angle).translated(centerX + radius * sin(rotaryStartAngle + rotationAngle), centerY - radius * cos(rotaryStartAngle + rotationAngle)));
 
         g.setColour(rightColour);
         g.fillPath(headphoneTransducer, AffineTransform::rotation(-angle).translated(centerX + radius * sin(rotaryEndAngle - rotationAngle), centerY - radius * cos(rotaryEndAngle - rotationAngle)));
-
+        
+        // Point of reference
+        /*
+        g.setColour (Colours::silver);
+        g.drawEllipse(bounds.getCentreX() - 2.0f, bounds.getBottom() - radius * (1.0f - cos(rotaryStartAngle - MathConstants<float>::pi)) - 2.0f, 4, 4, 1);
+        */
     }
 };
 
