@@ -37,8 +37,9 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     guiLayoutMenu.addItem("Plugin only", 1);
     guiLayoutMenu.addItem("+ Diagrams", 2);
     guiLayoutMenu.addItem("+ Spectrum", 3);
-    guiLayoutMenu.addItem("Full plugin", 4);
-    guiLayoutMenu.setSelectedId(4);
+    guiLayoutMenu.addItem("+ IS interface", 4);
+    guiLayoutMenu.addItem("Full plugin", 5);
+    guiLayoutMenu.setSelectedId(5);
     guiLayoutMenu.setJustificationType(Justification::centred);
     guiLayoutMenu.addListener(this);
     guiLayoutMenu.setTooltip(TRANS ("Gui layout choice"));
@@ -414,8 +415,17 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
         }
         iSInterface.setVisible(false);
 
-    }   
-    else if (guiLayoutMenu.getSelectedId() == 4)
+    }
+    else if(guiLayoutMenu.getSelectedId() == 4)
+    {
+        basePanel = bounds.removeFromTop(3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT);
+        iSInterface.setBounds(bounds);
+        spectrumAnalyser.setVisible(false);
+        filterGraphics.setVisible(false);
+        iSInterface.setVisible(true);
+
+    }
+    else if (guiLayoutMenu.getSelectedId() == 5)
     {
         auto leftPanels = bounds.removeFromLeft(4*DIALSIZE);
         
