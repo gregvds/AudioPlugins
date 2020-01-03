@@ -38,7 +38,6 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     guiLayoutMenu.addItem("+ Diagrams", 2);
     guiLayoutMenu.addItem("+ Spectrum", 3);
     guiLayoutMenu.addItem("Full plugin", 4);
-    //guiLayoutMenu.addItem("I.S. interface", 5);
     guiLayoutMenu.setSelectedId(4);
     guiLayoutMenu.setJustificationType(Justification::centred);
     guiLayoutMenu.addListener(this);
@@ -349,7 +348,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     settingsDictionnary[String("Pure Haas")]["xfeedGain"] = -4.0f;
     settingsDictionnary[String("Pure Haas")]["xfeedQ"] = 0.0f;
 
-    /*
+    
     preferencesButton.setButtonText("Preferences");
     preferencesButton.onClick = [this] {prefsPanel.showInDialogBox("Preferences", 400, 400, getLookAndFeel().findColour (ResizableWindow::backgroundColourId)); };
     addAndMakeVisible(preferencesButton);
@@ -364,7 +363,7 @@ GainSliderAudioProcessorEditor::GainSliderAudioProcessorEditor (GainSliderAudioP
     prefsPanel.colourSelector.setSwatchColour(5, directColour);
     prefsPanel.colourSelector.setSwatchColour(6, outColour);
     DBG("Number of swatches" << prefsPanel.colourSelector.getNumSwatches());
-    */
+    
 }
 
 GainSliderAudioProcessorEditor::~GainSliderAudioProcessorEditor()
@@ -415,7 +414,7 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
         }
         iSInterface.setVisible(false);
 
-    }
+    }   
     else if (guiLayoutMenu.getSelectedId() == 4)
     {
         auto leftPanels = bounds.removeFromLeft(4*DIALSIZE);
@@ -439,7 +438,10 @@ void GainSliderAudioProcessorEditor::paint (Graphics& g)
     menu = basePanel.removeFromTop(TEXTBOXHEIGT).reduced(3,0);
     
     crossFeedMenu.setBounds(menu.removeFromLeft(DIALSIZE));
+    
+    // WIP preference Panel in creation
     //preferencesButton.setBounds(menu.removeFromLeft(DIALSIZE));
+    
     guiLayoutMenu.setBounds(menu.removeFromRight(DIALSIZE));
     activeStateToggleButton.setBounds(menu.removeFromRight(DIALSIZE));
     
@@ -489,7 +491,6 @@ void GainSliderAudioProcessorEditor::resized()
 {
 }
 
-
 //==============================================================================
 // Unavoidable methods that must be instanciated, even if not used
 void GainSliderAudioProcessorEditor::sliderValueChanged(Slider *slider)
@@ -499,6 +500,7 @@ void GainSliderAudioProcessorEditor::sliderValueChanged(Slider *slider)
 
 void GainSliderAudioProcessorEditor::buttonClicked(Button *toggleButton)
 {
+    
 }
 
 void GainSliderAudioProcessorEditor::comboBoxChanged(ComboBox *comboBox)

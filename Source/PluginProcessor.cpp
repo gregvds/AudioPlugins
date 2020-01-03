@@ -254,6 +254,8 @@ void GainSliderAudioProcessor::updateFilterParameters ()
 
 void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuffer& midiMessages)
 {
+    
+    
     ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -272,13 +274,33 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
     
     // If filter is activated
     auto* activeState = treeState.getRawParameterValue(ACTIVE_ID);
-    if (*activeState == true)
+    if (*activeState != false or LastProcessBlockActive != false)
     {
         const int bufferLength = buffer.getNumSamples();
         const int delayBufferLength = mDelayBuffer.getNumSamples();
 
         // We copy the buffer into the filter buffer
         mFilterBuffer.makeCopyOf(buffer);
+        
+        // If last time we entered the function the process was not active,
+        // we ramp up the crossfeed signal
+        // and record this processBlock step was an active one
+        if (LastProcessBlockActive == false)
+        {
+            mFilterBuffer.applyGainRamp(0, bufferLength, 0.0f, 1.0f);
+            LastProcessBlockActive = true;
+            DBG("Active and lastProcessBlock Active: true, false");
+        }
+        // If we are here because the current Active state is off, then it is
+        // due to the last processBlock call which was Active
+        // we ramp down the crossfeed signal
+        // and record this processBlock step was an inactive one.
+        if (*activeState == false)
+        {
+            mFilterBuffer.applyGainRamp(0, bufferLength, 1.0f, 0.0f);
+            LastProcessBlockActive = false;
+            DBG("Active and lastProcessBlock Active: false, true");
+        }
         
         // Do the filtering on the filter buffer for the Crossfeed signal
         //updateFilterParameters();
@@ -309,6 +331,14 @@ void GainSliderAudioProcessor::processBlock (AudioBuffer<float>& buffer, MidiBuf
         //Update write position
         mWritePosition += buffer.getNumSamples();
         mWritePosition %= mDelayBuffer.getNumSamples();
+        
+        // Reset the mWritePosition if the process has stop
+        /*
+        if (*activeState == false)
+        {
+            mWritePosition = 0;
+        }
+        */
     }
         
     

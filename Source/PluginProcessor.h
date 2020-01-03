@@ -111,6 +111,8 @@ private:
     int mWritePosition { 0 };
     int mSamplesPerBlock { 512 };
     
+    bool LastProcessBlockActive = false;
+    
     // dsp filters coefficients
     dsp::IIR::Coefficients<float> iirCoefficientsXfeed;
     dsp::IIR::Coefficients<float> iirCoefficientsDirect;

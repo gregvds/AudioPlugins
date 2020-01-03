@@ -198,7 +198,6 @@ private:
     SharedResourcePointer<TooltipWindow> tooltipWindow;
     
     Rectangle<int> bounds;
-    //Rectangle<int> topPanel;
     Rectangle<int> menu;
     Rectangle<int> dials;
     Rectangle<int> directSliders;
@@ -215,10 +214,6 @@ private:
     Rectangle<int> displayPanel1;
     Rectangle<int> displayPanel2;
 
-    //Rectangle<int> leftSpectrumPart;
-    //Rectangle<int> spectrumFrame1;
-    //Rectangle<int> spectrumFrame2;
-    
     bool firstRun = true;
     
     int guiSizes [4] [2] = {{4* DIALSIZE,                 3*(DIALSIZE + TEXTBOXHEIGT + LABELHEIGHT) + TEXTBOXHEIGT},

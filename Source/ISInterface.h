@@ -230,35 +230,6 @@ private:
         
     }
     
-    void blurPlugin(bool shouldBeBlurred)
-    {
-        if (childrenOfGUI.size() == 0)
-        {
-            DBG("Refilling childrenOfGUI...");
-            childrenOfGUI = this->getParentComponent()->getChildren();
-        }
-        if (shouldBeBlurred == true)
-        {
-            //for (int i = 0; i < childrenOfGUI.size(); i++)
-            //{
-                GlowEffect blur = GlowEffect();
-                ImageEffectFilter * blurPointer = &blur;
-                
-                getSlider("delaySlider")->setComponentEffect(blurPointer);
-                
-                
-            //}
-        }
-        else
-        {
-            for (int i = 0; i < childrenOfGUI.size(); i++)
-            {
-                childrenOfGUI[i]->setComponentEffect(nullptr);
-            }
-
-        }
-    }
-
 //==============================================================================
     void updateEditorValues(float position)
     {
@@ -295,13 +266,17 @@ private:
         {
             delaySlider->setValue(      0.0f);
             activeStateToggleButton->setToggleState(false, NotificationType::sendNotification) ;
-            //blurPlugin(true);
         }
         else if (position > -100.0f and position < -47.78f)
         {
             float delayNormalizedPosition = (position + 47.78f) / 52.22f;
             delaySlider->setValue(      delaySlider->getMaximum() - (delaySlider->getMaximum() - delaySlider->getMinimum())
                                    * cos(180.0f * delayNormalizedPosition * MathConstants<float>::pi / 180.0f));
+            activeStateToggleButton->setToggleState(true, NotificationType::sendNotification) ;
+        }
+        else
+        {
+            delaySlider->setValue(0.0f);
             activeStateToggleButton->setToggleState(true, NotificationType::sendNotification) ;
         }
         
